@@ -16,6 +16,10 @@ rootProject.name = 'Autentication'
 include ':app-service'
 include ':model'
 include ':usecase'
+include ':entry-points'
+include ':user-repository'
 project(':app-service').projectDir = file('./applications/app-service')
 project(':model').projectDir = file('./domain/model')
 project(':usecase').projectDir = file('./domain/usecase')
+project(':entry-points').projectDir = file('./infrastructure/entry-points')
+project(':user-repository').projectDir = file('./infrastructure/driven-adapters/user-repository')
