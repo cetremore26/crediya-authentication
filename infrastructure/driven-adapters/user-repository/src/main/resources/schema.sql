@@ -9,3 +9,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     salario_base DECIMAL(17, 2) NOT NULL,
     CONSTRAINT uk_usuarios_correo_electronico UNIQUE (correo_electronico)
 );
+
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS documento_identidad VARCHAR(15);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_usuarios_documento_identidad
+    ON usuarios (documento_identidad);

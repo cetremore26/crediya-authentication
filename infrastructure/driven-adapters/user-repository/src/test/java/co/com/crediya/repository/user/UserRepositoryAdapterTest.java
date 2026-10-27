@@ -48,6 +48,19 @@ class UserRepositoryAdapterTest {
     }
 
     @Test
+    void findsUserByDocumentAndRejectsDuplicateDocument() {
+        userRepository.save(user("ana@example.com").toBuilder().documentoIdentidad("1020304050").build());
+
+        assertTrue(userRepository.existsByDocumentoIdentidad("1020304050"));
+        assertEquals("Ana", userRepository.findByDocumentoIdentidad("1020304050").orElseThrow().getNombres());
+        assertTrue(userRepository.findByDocumentoIdentidad("999999").isEmpty());
+        assertThrows(
+                UserAlreadyExistsException.class,
+                () -> userRepository.save(user("otra@example.com").toBuilder()
+                        .documentoIdentidad("1020304050").build()));
+    }
+
+    @Test
     void preservesUserDataWhenSaving() {
         User user = user("ana@example.com");
 

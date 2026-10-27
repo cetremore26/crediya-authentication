@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record UserRequest(
+        @JsonProperty("documento_identidad") String documentoIdentidad,
         String nombres,
         String apellidos,
         @JsonProperty("fecha_nacimiento") LocalDate fechaNacimiento,
@@ -16,6 +17,7 @@ public record UserRequest(
 
     public User toDomain() {
         return User.builder()
+                .documentoIdentidad(documentoIdentidad)
                 .nombres(nombres)
                 .apellidos(apellidos)
                 .fechaNacimiento(fechaNacimiento)
