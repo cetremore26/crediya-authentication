@@ -14,9 +14,12 @@ spring:
       mode: always
   devtools:
     add-properties: false
-  h2:
-    console:
-      enabled: true
-      path: /h2
   profiles:
     include:
+jwt:
+  secret: ${JWT_SECRET:dev-only-secret-change-me-in-production-0123456789}
+  expiration-seconds: ${JWT_EXPIRATION_SECONDS:3600}
+crediya:
+  admin:
+    email: ${ADMIN_EMAIL:admin@crediya.com}
+    password: ${ADMIN_PASSWORD:Admin12345}

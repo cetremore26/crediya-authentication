@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import co.com.crediya.model.user.Rol;
 import co.com.crediya.model.user.User;
 import co.com.crediya.model.user.exception.UserAlreadyExistsException;
 import java.math.BigDecimal;
@@ -58,6 +59,20 @@ class UserRepositoryAdapterTest {
                 UserAlreadyExistsException.class,
                 () -> userRepository.save(user("otra@example.com").toBuilder()
                         .documentoIdentidad("1020304050").build()));
+    }
+
+    @Test
+    void findsUserByEmailWithPasswordHashAndRole() {
+        userRepository.save(user("ana@example.com").toBuilder()
+                .clave("hash")
+                .rol(Rol.ADMIN)
+                .build());
+
+        User found = userRepository.findByCorreoElectronico("ANA@example.com").orElseThrow();
+
+        assertEquals("hash", found.getClave());
+        assertEquals(Rol.ADMIN, found.getRol());
+        assertTrue(userRepository.findByCorreoElectronico("nadie@example.com").isEmpty());
     }
 
     @Test
