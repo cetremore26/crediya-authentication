@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 public class RegisterUserUseCase {
     private static final BigDecimal MINIMUM_SALARY = BigDecimal.ZERO;
     private static final BigDecimal MAXIMUM_SALARY = new BigDecimal("15000000");
+    private static final Pattern DOCUMENTO_PATTERN = Pattern.compile("^\\d{5,15}$");
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
@@ -28,7 +29,13 @@ public class RegisterUserUseCase {
             throw new UserAlreadyExistsException();
         }
 
+        String documento = normalizeDocumento(user.getDocumentoIdentidad());
+        if (documento != null && userRepository.existsByDocumentoIdentidad(documento)) {
+            throw new UserAlreadyExistsException();
+        }
+
         User userToSave = user.toBuilder()
+                .documentoIdentidad(documento)
                 .correoElectronico(email)
                 .build();
         return userRepository.save(userToSave);
@@ -45,6 +52,12 @@ public class RegisterUserUseCase {
             throw new UserValidationException("Los apellidos son obligatorios.");
         }
 
+        String documento = normalizeDocumento(user.getDocumentoIdentidad());
+        if (documento != null && !DOCUMENTO_PATTERN.matcher(documento).matches()) {
+            throw new UserValidationException(
+                    "El documento de identidad debe contener entre 5 y 15 dígitos.");
+        }
+
         String email = user.getCorreoElectronico();
         if (isBlank(email) || !EMAIL_PATTERN.matcher(email.trim()).matches()) {
             throw new UserValidationException("El correo electrónico no es válido.");
@@ -57,6 +70,10 @@ public class RegisterUserUseCase {
             throw new UserValidationException(
                     "El salario base debe estar entre 0 y 15000000.");
         }
+    }
+
+    private String normalizeDocumento(String documento) {
+        return isBlank(documento) ? null : documento.trim();
     }
 
     private boolean isBlank(String value) {

@@ -1,6 +1,7 @@
 package co.com.crediya.api;
 
 import co.com.crediya.model.user.exception.UserAlreadyExistsException;
+import co.com.crediya.model.user.exception.UserNotFoundException;
 import co.com.crediya.usecase.user.exception.UserValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,17 +17,26 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(UserValidationException.class)
     public ResponseEntity<ApiErrorResponse> handleValidation(UserValidationException exception) {
+        LOGGER.warn("Validación fallida al registrar usuario: {}", exception.getMessage());
         return error(HttpStatus.BAD_REQUEST, "DATOS_INVALIDOS", exception.getMessage());
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ApiErrorResponse> handleDuplicate(UserAlreadyExistsException exception) {
+        LOGGER.warn("Intento de registro con correo duplicado.");
         return error(HttpStatus.CONFLICT, "CORREO_DUPLICADO", exception.getMessage());
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleNotFound(UserNotFoundException exception) {
+        LOGGER.warn("Consulta de usuario inexistente.");
+        return error(HttpStatus.NOT_FOUND, "USUARIO_NO_ENCONTRADO", exception.getMessage());
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiErrorResponse> handleMalformedRequest(
             HttpMessageNotReadableException exception) {
+        LOGGER.warn("Cuerpo de la solicitud con formato inválido.");
         return error(
                 HttpStatus.BAD_REQUEST,
                 "SOLICITUD_INVALIDA",
