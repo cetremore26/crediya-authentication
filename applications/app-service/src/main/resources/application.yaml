@@ -4,6 +4,14 @@ server:
 spring:
   application:
     name: Autentication
+  datasource:
+    url: ${DB_URL:jdbc:h2:file:./data/crediya-auth;DB_CLOSE_ON_EXIT=FALSE}
+    driver-class-name: org.h2.Driver
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+  sql:
+    init:
+      mode: always
   devtools:
     add-properties: false
   h2:
