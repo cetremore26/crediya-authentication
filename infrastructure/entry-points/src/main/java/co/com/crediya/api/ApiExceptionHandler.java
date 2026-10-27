@@ -1,5 +1,6 @@
 package co.com.crediya.api;
 
+import co.com.crediya.model.auth.exception.InvalidCredentialsException;
 import co.com.crediya.model.user.exception.UserAlreadyExistsException;
 import co.com.crediya.model.user.exception.UserNotFoundException;
 import co.com.crediya.usecase.user.exception.UserValidationException;
@@ -25,6 +26,13 @@ public class ApiExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleDuplicate(UserAlreadyExistsException exception) {
         LOGGER.warn("Intento de registro con correo duplicado.");
         return error(HttpStatus.CONFLICT, "CORREO_DUPLICADO", exception.getMessage());
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidCredentials(
+            InvalidCredentialsException exception) {
+        LOGGER.warn("Intento de inicio de sesión con credenciales inválidas.");
+        return error(HttpStatus.UNAUTHORIZED, "CREDENCIALES_INVALIDAS", exception.getMessage());
     }
 
     @ExceptionHandler(UserNotFoundException.class)

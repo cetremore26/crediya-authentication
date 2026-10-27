@@ -11,5 +11,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
 );
 
 ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS documento_identidad VARCHAR(15);
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS clave VARCHAR(100);
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS rol VARCHAR(20);
 CREATE UNIQUE INDEX IF NOT EXISTS uk_usuarios_documento_identidad
     ON usuarios (documento_identidad);

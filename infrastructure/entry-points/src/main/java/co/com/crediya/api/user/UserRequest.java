@@ -1,5 +1,6 @@
 package co.com.crediya.api.user;
 
+import co.com.crediya.model.user.Rol;
 import co.com.crediya.model.user.User;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
@@ -13,7 +14,9 @@ public record UserRequest(
         String direccion,
         String telefono,
         @JsonProperty("correo_electronico") String correoElectronico,
-        @JsonProperty("salario_base") BigDecimal salarioBase) {
+        @JsonProperty("salario_base") BigDecimal salarioBase,
+        String clave,
+        Rol rol) {
 
     public User toDomain() {
         return User.builder()
@@ -25,6 +28,8 @@ public record UserRequest(
                 .telefono(telefono)
                 .correoElectronico(correoElectronico)
                 .salarioBase(salarioBase)
+                .clave(clave)
+                .rol(rol)
                 .build();
     }
 }
