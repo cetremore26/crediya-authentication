@@ -7,6 +7,8 @@ import java.util.Optional;
 public interface UserRepository {
     boolean existsByCorreoElectronico(String correoElectronico);
 
+    Optional<User> findByCorreoElectronico(String correoElectronico);
+
     boolean existsByDocumentoIdentidad(String documentoIdentidad);
 
     Optional<User> findByDocumentoIdentidad(String documentoIdentidad);
