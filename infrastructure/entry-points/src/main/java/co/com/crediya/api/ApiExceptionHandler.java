@@ -16,17 +16,20 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(UserValidationException.class)
     public ResponseEntity<ApiErrorResponse> handleValidation(UserValidationException exception) {
+        LOGGER.warn("Validación fallida al registrar usuario: {}", exception.getMessage());
         return error(HttpStatus.BAD_REQUEST, "DATOS_INVALIDOS", exception.getMessage());
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ApiErrorResponse> handleDuplicate(UserAlreadyExistsException exception) {
+        LOGGER.warn("Intento de registro con correo duplicado.");
         return error(HttpStatus.CONFLICT, "CORREO_DUPLICADO", exception.getMessage());
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiErrorResponse> handleMalformedRequest(
             HttpMessageNotReadableException exception) {
+        LOGGER.warn("Cuerpo de la solicitud con formato inválido.");
         return error(
                 HttpStatus.BAD_REQUEST,
                 "SOLICITUD_INVALIDA",

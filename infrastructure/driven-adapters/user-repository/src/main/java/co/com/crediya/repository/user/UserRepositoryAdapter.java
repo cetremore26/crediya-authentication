@@ -7,6 +7,8 @@ import java.sql.PreparedStatement;
 import java.util.Locale;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public class UserRepositoryAdapter implements UserRepository {
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserRepositoryAdapter.class);
     private static final String INSERT_USER = """
             INSERT INTO usuarios (
                 id, nombres, apellidos, fecha_nacimiento, direccion, telefono,
@@ -56,9 +59,11 @@ public class UserRepositoryAdapter implements UserRepository {
                 return statement;
             });
         } catch (DuplicateKeyException exception) {
+            LOGGER.warn("Violación de unicidad de correo al guardar usuario.");
             throw new UserAlreadyExistsException();
         }
 
+        LOGGER.info("Usuario guardado con id {}.", id);
         return user.toBuilder().id(id).correoElectronico(email).build();
     }
 }
