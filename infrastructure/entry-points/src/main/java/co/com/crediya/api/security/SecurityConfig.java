@@ -34,6 +34,8 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(PUBLIC_PATHS).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/usuarios")
+                        .hasAnyRole(ROLE_ADMIN, ROLE_ASESOR)
                         .requestMatchers(HttpMethod.POST, "/api/v1/usuarios")
                         .hasAnyRole(ROLE_ADMIN, ROLE_ASESOR)
                         .anyRequest().authenticated())
