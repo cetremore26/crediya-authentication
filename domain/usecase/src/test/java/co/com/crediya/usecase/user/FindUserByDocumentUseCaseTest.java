@@ -19,6 +19,11 @@ class FindUserByDocumentUseCaseTest {
         }
 
         @Override
+        public Optional<User> findByCorreoElectronico(String correoElectronico) {
+            return Optional.empty();
+        }
+
+        @Override
         public boolean existsByDocumentoIdentidad(String documentoIdentidad) {
             return DOCUMENTO.equals(documentoIdentidad);
         }
