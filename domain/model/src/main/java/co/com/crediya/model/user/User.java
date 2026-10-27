@@ -15,6 +15,7 @@ import lombok.Setter;
 @Builder(toBuilder = true)
 public class User {
     private UUID id;
+    private String documentoIdentidad;
     private String nombres;
     private String apellidos;
     private LocalDate fechaNacimiento;
@@ -22,4 +23,6 @@ public class User {
     private String telefono;
     private String correoElectronico;
     private BigDecimal salarioBase;
+    private String clave;
+    private Rol rol;
 }
