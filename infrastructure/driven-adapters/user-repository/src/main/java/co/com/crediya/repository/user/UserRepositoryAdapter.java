@@ -5,6 +5,7 @@ import co.com.crediya.model.user.exception.UserAlreadyExistsException;
 import co.com.crediya.model.user.gateways.UserRepository;
 import java.sql.PreparedStatement;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -20,8 +21,8 @@ public class UserRepositoryAdapter implements UserRepository {
     private static final String INSERT_USER = """
             INSERT INTO usuarios (
                 id, nombres, apellidos, fecha_nacimiento, direccion, telefono,
-                correo_electronico, salario_base
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                correo_electronico, salario_base, documento_identidad
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
     private final JdbcTemplate jdbcTemplate;
@@ -37,6 +38,33 @@ public class UserRepositoryAdapter implements UserRepository {
                 Boolean.class,
                 correoElectronico);
         return Boolean.TRUE.equals(exists);
+    }
+
+    @Override
+    public boolean existsByDocumentoIdentidad(String documentoIdentidad) {
+        Boolean exists = jdbcTemplate.queryForObject(
+                "SELECT EXISTS (SELECT 1 FROM usuarios WHERE documento_identidad = ?)",
+                Boolean.class,
+                documentoIdentidad);
+        return Boolean.TRUE.equals(exists);
+    }
+
+    @Override
+    public Optional<User> findByDocumentoIdentidad(String documentoIdentidad) {
+        return jdbcTemplate.query(
+                        "SELECT id, documento_identidad, nombres, apellidos, correo_electronico, "
+                                + "salario_base FROM usuarios WHERE documento_identidad = ?",
+                        (rs, rowNum) -> User.builder()
+                                .id(rs.getObject("id", UUID.class))
+                                .documentoIdentidad(rs.getString("documento_identidad"))
+                                .nombres(rs.getString("nombres"))
+                                .apellidos(rs.getString("apellidos"))
+                                .correoElectronico(rs.getString("correo_electronico"))
+                                .salarioBase(rs.getBigDecimal("salario_base"))
+                                .build(),
+                        documentoIdentidad)
+                .stream()
+                .findFirst();
     }
 
     @Override
@@ -56,6 +84,7 @@ public class UserRepositoryAdapter implements UserRepository {
                 statement.setString(6, user.getTelefono());
                 statement.setString(7, email);
                 statement.setBigDecimal(8, user.getSalarioBase());
+                statement.setString(9, user.getDocumentoIdentidad());
                 return statement;
             });
         } catch (DuplicateKeyException exception) {

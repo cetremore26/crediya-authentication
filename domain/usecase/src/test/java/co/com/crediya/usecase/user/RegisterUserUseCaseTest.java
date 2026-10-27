@@ -87,6 +87,28 @@ class RegisterUserUseCaseTest {
         assertEquals(0, repository.savedUsers.size());
     }
 
+    @Test
+    void registersUserWithValidDocument() {
+        User saved = useCase.execute(validUser().toBuilder().documentoIdentidad(" 1020304050 ").build());
+
+        assertEquals("1020304050", saved.getDocumentoIdentidad());
+    }
+
+    @Test
+    void rejectsInvalidDocumentFormat() {
+        User user = validUser().toBuilder().documentoIdentidad("12ab").build();
+
+        assertThrows(UserValidationException.class, () -> useCase.execute(user));
+    }
+
+    @Test
+    void rejectsAlreadyRegisteredDocument() {
+        repository.documentAlreadyExists = true;
+        User user = validUser().toBuilder().documentoIdentidad("1020304050").build();
+
+        assertThrows(UserAlreadyExistsException.class, () -> useCase.execute(user));
+    }
+
     private User validUser() {
         return User.builder()
                 .nombres("Ana")
@@ -98,11 +120,22 @@ class RegisterUserUseCaseTest {
 
     private static class FakeUserRepository implements UserRepository {
         private boolean emailAlreadyExists;
+        private boolean documentAlreadyExists;
         private final List<User> savedUsers = new ArrayList<>();
 
         @Override
         public boolean existsByCorreoElectronico(String correoElectronico) {
             return emailAlreadyExists;
+        }
+
+        @Override
+        public boolean existsByDocumentoIdentidad(String documentoIdentidad) {
+            return documentAlreadyExists;
+        }
+
+        @Override
+        public java.util.Optional<User> findByDocumentoIdentidad(String documentoIdentidad) {
+            return java.util.Optional.empty();
         }
 
         @Override
