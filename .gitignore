@@ -335,3 +335,6 @@ gradle-app.setting
 *.hprof
 build-cache
 applications/app-service/data/
+
+# VS Code
+.vscode/
