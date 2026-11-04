@@ -1,41 +1,43 @@
-package co.com.crediya.repository.user;
+package co.com.crediya.jpa.user;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import co.com.crediya.jpa.JpaTestApplication;
 import co.com.crediya.model.user.Rol;
 import co.com.crediya.model.user.User;
 import co.com.crediya.model.user.exception.UserAlreadyExistsException;
 import java.math.BigDecimal;
-import java.util.UUID;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
-import org.springframework.core.io.ClassPathResource;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 
+@SpringBootTest(classes = JpaTestApplication.class)
 class UserRepositoryAdapterTest {
+
+    @Autowired
     private UserRepositoryAdapter userRepository;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @BeforeEach
-    void setUp() {
-        DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setDriverClassName("org.h2.Driver");
-        dataSource.setUrl("jdbc:h2:mem:" + UUID.randomUUID() + ";DB_CLOSE_DELAY=-1");
-        dataSource.setUsername("sa");
-        dataSource.setPassword("");
-        new ResourceDatabasePopulator(new ClassPathResource("schema.sql")).execute(dataSource);
-        userRepository = new UserRepositoryAdapter(new JdbcTemplate(dataSource));
+    void cleanDatabase() {
+        jdbcTemplate.update("DELETE FROM usuarios");
     }
 
     @Test
     void savesUserWithGeneratedIdAndCanFindEmailWithoutCaseSensitivity() {
-        User saved = userRepository.save(user("ana@example.com"));
+        User saved = userRepository.save(user("Ana@Example.com"));
 
         assertNotNull(saved.getId());
+        assertEquals("ana@example.com", saved.getCorreoElectronico());
         assertTrue(userRepository.existsByCorreoElectronico("ANA@EXAMPLE.COM"));
     }
 
@@ -49,11 +51,23 @@ class UserRepositoryAdapterTest {
     }
 
     @Test
-    void findsUserByDocumentAndRejectsDuplicateDocument() {
-        userRepository.save(user("ana@example.com").toBuilder().documentoIdentidad("1020304050").build());
+    void doesNotReportOtherIntegrityErrorsAsDuplicates() {
+        User withoutName = user("ana@example.com").toBuilder().nombres(null).build();
+
+        assertThrows(DataIntegrityViolationException.class, () -> userRepository.save(withoutName));
+    }
+
+    @Test
+    void findsUserByDocumentWithoutPasswordAndRejectsDuplicateDocument() {
+        userRepository.save(user("ana@example.com").toBuilder()
+                .documentoIdentidad("1020304050")
+                .clave("hash")
+                .build());
 
         assertTrue(userRepository.existsByDocumentoIdentidad("1020304050"));
-        assertEquals("Ana", userRepository.findByDocumentoIdentidad("1020304050").orElseThrow().getNombres());
+        User found = userRepository.findByDocumentoIdentidad("1020304050").orElseThrow();
+        assertEquals("Ana", found.getNombres());
+        assertNull(found.getClave());
         assertTrue(userRepository.findByDocumentoIdentidad("999999").isEmpty());
         assertThrows(
                 UserAlreadyExistsException.class,
@@ -83,7 +97,7 @@ class UserRepositoryAdapterTest {
 
         assertEquals(user.getNombres(), saved.getNombres());
         assertEquals(user.getApellidos(), saved.getApellidos());
-        assertEquals(user.getSalarioBase(), saved.getSalarioBase());
+        assertEquals(0, user.getSalarioBase().compareTo(saved.getSalarioBase()));
     }
 
     private User user(String email) {
