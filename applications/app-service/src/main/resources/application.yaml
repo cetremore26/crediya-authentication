@@ -5,12 +5,12 @@ spring:
   application:
     name: Autentication
   datasource:
-    url: ${DB_URL:jdbc:h2:file:./data/crediya-auth;DB_CLOSE_ON_EXIT=FALSE}
-    driver-class-name: org.h2.Driver
-    username: ${DB_USERNAME:sa}
-    password: ${DB_PASSWORD:}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/crediya_auth}
+    driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
+    username: ${DB_USERNAME:crediya}
+    password: ${DB_PASSWORD:crediya_auth_pass}
   jpa:
-    database-platform: ${DB_DIALECT:org.hibernate.dialect.H2Dialect}
+    database-platform: ${DB_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
     open-in-view: false
     hibernate:
       ddl-auto: ${DB_DDL_AUTO:none}
