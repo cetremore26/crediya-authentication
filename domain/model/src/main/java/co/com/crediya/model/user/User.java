@@ -5,13 +5,11 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import lombok.Builder;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
 @Builder(toBuilder = true)
 public class User {
     private UUID id;
