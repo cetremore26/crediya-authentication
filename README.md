@@ -46,3 +46,12 @@ Este módulo es el más externo de la arquitectura, es el encargado de ensamblar
 
 **Los beans de los casos de uso se disponibilizan automaticamente gracias a un '@ComponentScan' ubicado en esta capa.**
 # crediya-authentication
+
+## Configuración de base de datos
+
+Persistencia con JPA sobre PostgreSQL. Levanta la base con `docker compose up -d` desde la carpeta `CREDIYA`.
+
+- `DB_URL` (`jdbc:postgresql://localhost:5432/crediya_auth` por defecto)
+- `DB_USERNAME` / `DB_PASSWORD` (`crediya` / `crediya_auth_pass` por defecto, los del `docker-compose.yml`)
+- `DB_DRIVER` (`org.postgresql.Driver`) y `DB_DIALECT` (`org.hibernate.dialect.PostgreSQLDialect`)
+- `DB_DDL_AUTO` (`none`): el esquema lo crea `schema.sql` al arrancar.
