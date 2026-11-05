@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public class UserRepositoryAdapter
@@ -48,7 +49,13 @@ public class UserRepositoryAdapter
                 .map(user -> user.toBuilder().clave(null).build());
     }
 
+    /**
+     * Transactional: the insert is atomic and is rolled back on any error. The data is flushed
+     * inside the method (see {@link #saveData}) so that a unique violation is detected here and
+     * translated to {@link UserAlreadyExistsException} instead of failing later at commit time.
+     */
     @Override
+    @Transactional
     public User save(User user) {
         UUID id = user.getId() == null ? UUID.randomUUID() : user.getId();
         String email = user.getCorreoElectronico().trim().toLowerCase(Locale.ROOT);
@@ -66,6 +73,11 @@ public class UserRepositoryAdapter
 
         LOGGER.info("Usuario guardado con id {}.", id);
         return saved;
+    }
+
+    @Override
+    protected UserEntity saveData(UserEntity data) {
+        return repository.saveAndFlush(data);
     }
 
     private static boolean isUniqueViolation(DataIntegrityViolationException exception) {

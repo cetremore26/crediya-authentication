@@ -2,11 +2,10 @@ package co.com.crediya.jpa.user;
 
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.query.QueryByExampleExecutor;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserDataRepository
-        extends CrudRepository<UserEntity, UUID>, QueryByExampleExecutor<UserEntity> {
+        extends JpaRepository<UserEntity, UUID> {
 
     boolean existsByCorreoElectronicoIgnoreCase(String correoElectronico);
 
