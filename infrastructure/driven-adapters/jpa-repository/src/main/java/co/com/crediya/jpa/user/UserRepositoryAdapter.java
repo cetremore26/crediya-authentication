@@ -40,12 +40,9 @@ public class UserRepositoryAdapter
         return repository.existsByDocumentoIdentidad(documentoIdentidad);
     }
 
-    /** Lookup for other services: the password hash never leaves this adapter here. */
     @Override
     public Optional<User> findByDocumentoIdentidad(String documentoIdentidad) {
-        return repository.findByDocumentoIdentidad(documentoIdentidad)
-                .map(this::toEntity)
-                .map(user -> user.toBuilder().clave(null).build());
+        return repository.findByDocumentoIdentidad(documentoIdentidad).map(this::toEntity);
     }
 
     /**

@@ -6,7 +6,8 @@ import java.util.Optional;
 
 /**
  * Persistencia de usuarios. Solo guarda y consulta: recibe los usuarios ya normalizados y
- * validados por el dominio ({@link User#normalized()}, {@link User#validate()}).
+ * validados por el dominio ({@link User#normalized()}, {@link User#validate()}) y devuelve
+ * los datos completos; decidir qué se expone hacia afuera es tarea de quien los use.
  */
 public interface UserRepository {
     boolean existsByCorreoElectronico(String correoElectronico);
