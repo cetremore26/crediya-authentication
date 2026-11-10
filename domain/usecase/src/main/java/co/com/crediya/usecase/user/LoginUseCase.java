@@ -6,7 +6,7 @@ import co.com.crediya.model.auth.gateways.PasswordHasher;
 import co.com.crediya.model.auth.gateways.TokenProvider;
 import co.com.crediya.model.user.User;
 import co.com.crediya.model.user.gateways.UserRepository;
-import co.com.crediya.usecase.user.exception.UserValidationException;
+import co.com.crediya.model.user.exception.UserValidationException;
 import java.util.Locale;
 
 public class LoginUseCase {

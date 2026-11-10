@@ -2,9 +2,10 @@ package co.com.crediya.usecase.user;
 
 import co.com.crediya.model.user.User;
 import co.com.crediya.model.user.gateways.UserRepository;
-import co.com.crediya.usecase.user.exception.UserValidationException;
+import co.com.crediya.model.user.exception.UserValidationException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public class ListUsersByDocumentsUseCase {
     private static final int MAXIMUM_DOCUMENTS = 100;
@@ -28,7 +29,7 @@ public class ListUsersByDocumentsUseCase {
                 .map(String::trim)
                 .distinct()
                 .map(userRepository::findByDocumentoIdentidad)
-                .flatMap(java.util.Optional::stream)
+                .flatMap(Optional::stream)
                 .toList();
     }
 }

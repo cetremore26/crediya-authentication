@@ -6,9 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import co.com.crediya.model.auth.gateways.PasswordHasher;
 import co.com.crediya.model.user.Rol;
 import co.com.crediya.model.user.User;
+import co.com.crediya.model.user.exception.DocumentAlreadyRegisteredException;
 import co.com.crediya.model.user.exception.UserAlreadyExistsException;
 import co.com.crediya.model.user.gateways.UserRepository;
-import co.com.crediya.usecase.user.exception.UserValidationException;
+import co.com.crediya.model.user.exception.UserValidationException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -108,7 +109,17 @@ class RegisterUserUseCaseTest {
         repository.documentAlreadyExists = true;
         User user = validUser().toBuilder().documentoIdentidad("1020304050").build();
 
-        assertThrows(UserAlreadyExistsException.class, () -> useCase.execute(user));
+        assertThrows(DocumentAlreadyRegisteredException.class, () -> useCase.execute(user));
+        assertEquals(0, repository.savedUsers.size());
+    }
+
+    @Test
+    void lowercasesEmailBeforeSaving() {
+        User saved = useCase.execute(validUser().toBuilder()
+                .correoElectronico("Ana@Example.COM")
+                .build());
+
+        assertEquals("ana@example.com", saved.getCorreoElectronico());
     }
 
     private User validUser() {
