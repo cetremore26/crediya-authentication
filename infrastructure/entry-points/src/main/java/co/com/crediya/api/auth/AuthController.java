@@ -3,7 +3,6 @@ package co.com.crediya.api.auth;
 import co.com.crediya.api.ApiErrorResponse;
 import co.com.crediya.model.auth.AccessToken;
 import co.com.crediya.usecase.user.LoginUseCase;
-import co.com.crediya.usecase.user.exception.UserValidationException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -38,9 +37,6 @@ public class AuthController {
     @ApiResponse(responseCode = "401", description = "Correo o clave incorrectos",
             content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-        if (request == null) {
-            throw new UserValidationException("El cuerpo de la solicitud es obligatorio.");
-        }
         LOGGER.info("Solicitud de inicio de sesión recibida.");
         AccessToken accessToken =
                 loginUseCase.execute(request.correoElectronico(), request.clave());

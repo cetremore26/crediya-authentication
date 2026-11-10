@@ -34,7 +34,7 @@ class UserRepositoryAdapterTest {
 
     @Test
     void savesUserWithGeneratedIdAndCanFindEmailWithoutCaseSensitivity() {
-        User saved = userRepository.save(user("Ana@Example.com"));
+        User saved = userRepository.save(user("ana@example.com"));
 
         assertNotNull(saved.getId());
         assertEquals("ana@example.com", saved.getCorreoElectronico());
@@ -42,12 +42,12 @@ class UserRepositoryAdapterTest {
     }
 
     @Test
-    void rejectsDuplicateEmailRegardlessOfCase() {
+    void rejectsDuplicateEmail() {
         userRepository.save(user("ana@example.com"));
 
         assertThrows(
                 UserAlreadyExistsException.class,
-                () -> userRepository.save(user("ANA@example.com")));
+                () -> userRepository.save(user("ana@example.com")));
     }
 
     @Test

@@ -12,17 +12,19 @@ import co.com.crediya.model.user.User;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-class JwtTokenAdapterTest {
+/** Tokens emitidos por {@link JwtTokenProvider} y verificados por {@link JwtTokenVerifier}. */
+class JwtTokenTest {
     private static final String SECRET = "una-clave-de-pruebas-de-al-menos-32-caracteres";
 
-    private final JwtTokenAdapter adapter = new JwtTokenAdapter(SECRET, 3600);
+    private final JwtTokenProvider provider = new JwtTokenProvider(SECRET, 3600);
+    private final JwtTokenVerifier verifier = new JwtTokenVerifier(SECRET);
 
     @Test
     void generatedTokenCarriesIdentityAndRole() {
         UUID id = UUID.randomUUID();
-        AccessToken token = adapter.generate(user(id, Rol.CLIENTE, "1020304050"));
+        AccessToken token = provider.generate(user(id, Rol.CLIENTE, "1020304050"));
 
-        AuthenticatedUser authenticated = adapter.verify(token.token());
+        AuthenticatedUser authenticated = verifier.verify(token.token());
 
         assertEquals(3600, token.expiresInSeconds());
         assertEquals(id, authenticated.userId());
@@ -32,36 +34,37 @@ class JwtTokenAdapterTest {
 
     @Test
     void staffTokensHaveNoDocument() {
-        AccessToken token = adapter.generate(user(UUID.randomUUID(), Rol.ADMIN, null));
+        AccessToken token = provider.generate(user(UUID.randomUUID(), Rol.ADMIN, null));
 
-        assertNull(adapter.verify(token.token()).documentoIdentidad());
+        assertNull(verifier.verify(token.token()).documentoIdentidad());
     }
 
     @Test
     void rejectsTokenSignedWithAnotherSecret() {
-        JwtTokenAdapter other =
-                new JwtTokenAdapter("otra-clave-de-pruebas-de-al-menos-32-caracteres", 3600);
+        JwtTokenProvider other =
+                new JwtTokenProvider("otra-clave-de-pruebas-de-al-menos-32-caracteres", 3600);
         String token = other.generate(user(UUID.randomUUID(), Rol.ADMIN, null)).token();
 
-        assertThrows(InvalidTokenException.class, () -> adapter.verify(token));
+        assertThrows(InvalidTokenException.class, () -> verifier.verify(token));
     }
 
     @Test
     void rejectsExpiredToken() {
-        JwtTokenAdapter expired = new JwtTokenAdapter(SECRET, -10);
+        JwtTokenProvider expired = new JwtTokenProvider(SECRET, -10);
         String token = expired.generate(user(UUID.randomUUID(), Rol.ADMIN, null)).token();
 
-        assertThrows(InvalidTokenException.class, () -> adapter.verify(token));
+        assertThrows(InvalidTokenException.class, () -> verifier.verify(token));
     }
 
     @Test
     void rejectsGarbage() {
-        assertThrows(InvalidTokenException.class, () -> adapter.verify("no-es-un-jwt"));
+        assertThrows(InvalidTokenException.class, () -> verifier.verify("no-es-un-jwt"));
     }
 
     @Test
     void rejectsShortSecret() {
-        assertThrows(IllegalStateException.class, () -> new JwtTokenAdapter("corta", 3600));
+        assertThrows(IllegalStateException.class, () -> new JwtTokenProvider("corta", 3600));
+        assertThrows(IllegalStateException.class, () -> new JwtTokenVerifier("corta"));
     }
 
     private User user(UUID id, Rol rol, String documento) {
