@@ -1,4 +1,4 @@
-package co.com.crediya.usecase.user.exception;
+package co.com.crediya.model.user.exception;
 
 public class UserValidationException extends RuntimeException {
     public UserValidationException(String message) {
