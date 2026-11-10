@@ -10,7 +10,7 @@ import co.com.crediya.api.ApiExceptionHandler;
 import co.com.crediya.model.auth.AccessToken;
 import co.com.crediya.model.auth.exception.InvalidCredentialsException;
 import co.com.crediya.usecase.user.LoginUseCase;
-import co.com.crediya.usecase.user.exception.UserValidationException;
+import co.com.crediya.model.user.exception.UserValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MockMvc;
