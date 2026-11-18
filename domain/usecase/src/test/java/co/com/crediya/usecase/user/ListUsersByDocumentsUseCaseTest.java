@@ -3,15 +3,21 @@ package co.com.crediya.usecase.user;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import co.com.crediya.model.auth.AuthenticatedUser;
+import co.com.crediya.model.auth.exception.AccesoDenegadoException;
+import co.com.crediya.model.user.Rol;
 import co.com.crediya.model.user.User;
 import co.com.crediya.model.user.gateways.UserRepository;
 import co.com.crediya.model.user.exception.UserValidationException;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 
 class ListUsersByDocumentsUseCaseTest {
+    private static final AuthenticatedUser ASESOR =
+            new AuthenticatedUser(UUID.randomUUID(), "asesor@crediya.com", Rol.ASESOR, null);
     private final UserRepository repository = new UserRepository() {
         @Override
         public boolean existsByCorreoElectronico(String correoElectronico) {
@@ -44,7 +50,7 @@ class ListUsersByDocumentsUseCaseTest {
 
     @Test
     void returnsKnownUsersWithoutDuplicatesAndSkipsUnknown() {
-        List<User> users = useCase.execute(List.of("111111", " 222222 ", "111111", "999999"));
+        List<User> users = useCase.execute(List.of("111111", " 222222 ", "111111", "999999"), ASESOR);
 
         assertEquals(2, users.size());
     }
@@ -53,8 +59,19 @@ class ListUsersByDocumentsUseCaseTest {
     void rejectsEmptyAndOversizedRequests() {
         List<String> tooMany = IntStream.range(0, 101).mapToObj(String::valueOf).toList();
 
-        assertThrows(UserValidationException.class, () -> useCase.execute(null));
-        assertThrows(UserValidationException.class, () -> useCase.execute(List.of()));
-        assertThrows(UserValidationException.class, () -> useCase.execute(tooMany));
+        assertThrows(UserValidationException.class, () -> useCase.execute(null, ASESOR));
+        assertThrows(UserValidationException.class, () -> useCase.execute(List.of(), ASESOR));
+        assertThrows(UserValidationException.class, () -> useCase.execute(tooMany, ASESOR));
+    }
+
+    @Test
+    void onlyStaffCanListUsers() {
+        AuthenticatedUser admin = new AuthenticatedUser(UUID.randomUUID(), "a@crediya.com", Rol.ADMIN, null);
+        AuthenticatedUser cliente =
+                new AuthenticatedUser(UUID.randomUUID(), "c@crediya.com", Rol.CLIENTE, "111111");
+
+        assertEquals(1, useCase.execute(List.of("111111"), admin).size());
+        assertThrows(AccesoDenegadoException.class, () -> useCase.execute(List.of("111111"), cliente));
+        assertThrows(AccesoDenegadoException.class, () -> useCase.execute(List.of("111111"), null));
     }
 }

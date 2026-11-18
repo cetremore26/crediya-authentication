@@ -6,11 +6,14 @@ import java.util.UUID;
 public record AuthenticatedUser(
         UUID userId, String correoElectronico, Rol rol, String documentoIdentidad) {
 
-    /** El personal (ADMIN, ASESOR) consulta a cualquier usuario; un CLIENTE solo a sí mismo. */
+    /** El personal de CrediYa (ADMIN o ASESOR), a diferencia de los clientes. */
+    public boolean esPersonal() {
+        return rol == Rol.ADMIN || rol == Rol.ASESOR;
+    }
+
+    /** El personal consulta a cualquier usuario; un CLIENTE solo a sí mismo. */
     public boolean puedeConsultarDocumento(String documento) {
-        return switch (rol) {
-            case ADMIN, ASESOR -> true;
-            case CLIENTE -> documento != null && documento.equals(documentoIdentidad);
-        };
+        return esPersonal()
+                || rol == Rol.CLIENTE && documento != null && documento.equals(documentoIdentidad);
     }
 }
