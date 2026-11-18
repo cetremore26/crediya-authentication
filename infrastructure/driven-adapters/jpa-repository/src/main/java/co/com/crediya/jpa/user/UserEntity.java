@@ -56,6 +56,6 @@ public class UserEntity {
     private String clave;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "rol", length = 20)
+    @Column(name = "rol", nullable = false, length = 20)
     private Rol rol;
 }
