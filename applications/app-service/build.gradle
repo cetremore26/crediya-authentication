@@ -7,6 +7,7 @@ dependencies {
     implementation project(':jpa-repository')
     implementation project(':security')
     implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.reactivecommons.utils:object-mapper:0.1.0'
     runtimeOnly('org.springframework.boot:spring-boot-devtools')
     testImplementation 'com.tngtech.archunit:archunit:1.5.1'

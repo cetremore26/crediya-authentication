@@ -20,7 +20,7 @@ public class SecurityConfig {
     private static final String ROLE_ADMIN = "ADMIN";
     private static final String ROLE_ASESOR = "ASESOR";
     private static final String[] PUBLIC_PATHS = {
-            "/api/v1/login", JwksController.JWKS_PATH,
+            "/api/v1/login", JwksController.JWKS_PATH, "/actuator/health", "/actuator/health/**",
             "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
     };
 
