@@ -2,6 +2,7 @@ package co.com.crediya.api;
 
 import co.com.crediya.model.auth.exception.InvalidCredentialsException;
 import co.com.crediya.model.user.exception.DocumentAlreadyRegisteredException;
+import co.com.crediya.model.user.exception.RolNoPermitidoException;
 import co.com.crediya.model.user.exception.UserAlreadyExistsException;
 import co.com.crediya.model.user.exception.UserNotFoundException;
 import co.com.crediya.model.user.exception.UserValidationException;
@@ -34,6 +35,12 @@ public class ApiExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleDuplicate(UserAlreadyExistsException exception) {
         LOGGER.warn("Intento de registro con correo duplicado.");
         return error(HttpStatus.CONFLICT, "CORREO_DUPLICADO", exception.getMessage());
+    }
+
+    @ExceptionHandler(RolNoPermitidoException.class)
+    public ResponseEntity<ApiErrorResponse> handleRoleNotAllowed(RolNoPermitidoException exception) {
+        LOGGER.warn("Registro rechazado: el solicitante no puede asignar el rol pedido.");
+        return error(HttpStatus.FORBIDDEN, "ROL_NO_PERMITIDO", exception.getMessage());
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)

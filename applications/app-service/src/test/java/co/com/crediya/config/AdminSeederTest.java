@@ -3,6 +3,7 @@ package co.com.crediya.config;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -23,12 +24,12 @@ class AdminSeederTest {
         seeder.run(null);
 
         verify(registerUserUseCase).execute(argThat(user -> user.getRol() == Rol.ADMIN
-                && "admin@crediya.com".equals(user.getCorreoElectronico())));
+                && "admin@crediya.com".equals(user.getCorreoElectronico())), eq(Rol.ADMIN));
     }
 
     @Test
     void toleratesAnAdministratorThatAlreadyExists() {
-        when(registerUserUseCase.execute(any(User.class))).thenThrow(new UserAlreadyExistsException());
+        when(registerUserUseCase.execute(any(User.class), any(Rol.class))).thenThrow(new UserAlreadyExistsException());
 
         assertDoesNotThrow(() -> seeder.run(null));
     }

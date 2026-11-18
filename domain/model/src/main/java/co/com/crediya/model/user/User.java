@@ -2,24 +2,29 @@ package co.com.crediya.model.user;
 
 import co.com.crediya.model.user.exception.UserValidationException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
 
 /**
  * Usuario del sistema. Además de los datos, conoce sus propias reglas:
  * cómo se normaliza ({@link #normalized()}) y cuándo es válido ({@link #validate()}).
+ * Es inmutable: los cambios se hacen con {@code toBuilder()}.
  */
 @Getter
-@Setter
 @Builder(toBuilder = true)
 public class User {
     private static final int MINIMUM_PASSWORD_LENGTH = 8;
-    private static final int MAXIMUM_PASSWORD_LENGTH = 72;
+    /** BCrypt solo usa los primeros 72 bytes de la clave. */
+    private static final int MAXIMUM_PASSWORD_BYTES = 72;
+    private static final int MAXIMUM_NAME_LENGTH = 150;
+    private static final int MAXIMUM_ADDRESS_LENGTH = 300;
+    private static final int MAXIMUM_PHONE_LENGTH = 50;
+    private static final int MAXIMUM_EMAIL_LENGTH = 320;
     private static final BigDecimal MINIMUM_SALARY = BigDecimal.ZERO;
     private static final BigDecimal MAXIMUM_SALARY = new BigDecimal("15000000");
     private static final Pattern DOCUMENTO_PATTERN = Pattern.compile("^\\d{5,15}$");
@@ -68,6 +73,11 @@ public class User {
         if (isBlank(apellidos)) {
             throw new UserValidationException("Los apellidos son obligatorios.");
         }
+        ensureMaximumLength(nombres, MAXIMUM_NAME_LENGTH, "nombres");
+        ensureMaximumLength(apellidos, MAXIMUM_NAME_LENGTH, "apellidos");
+        ensureMaximumLength(direccion, MAXIMUM_ADDRESS_LENGTH, "direccion");
+        ensureMaximumLength(telefono, MAXIMUM_PHONE_LENGTH, "telefono");
+        ensureMaximumLength(correoElectronico, MAXIMUM_EMAIL_LENGTH, "correo_electronico");
         if (documentoIdentidad != null && !DOCUMENTO_PATTERN.matcher(documentoIdentidad).matches()) {
             throw new UserValidationException(
                     "El documento de identidad debe contener entre 5 y 15 dígitos.");
@@ -78,8 +88,10 @@ public class User {
         }
         if (clave == null
                 || clave.length() < MINIMUM_PASSWORD_LENGTH
-                || clave.length() > MAXIMUM_PASSWORD_LENGTH) {
-            throw new UserValidationException("La clave debe tener entre 8 y 72 caracteres.");
+                || clave.getBytes(StandardCharsets.UTF_8).length > MAXIMUM_PASSWORD_BYTES) {
+            throw new UserValidationException(
+                    "La clave debe tener mínimo 8 caracteres y máximo 72 bytes "
+                            + "(72 caracteres sin tildes ni símbolos especiales).");
         }
         if (isBlank(correoElectronico) || !EMAIL_PATTERN.matcher(correoElectronico).matches()) {
             throw new UserValidationException("El correo electrónico no es válido.");
@@ -88,6 +100,13 @@ public class User {
                 || salarioBase.compareTo(MINIMUM_SALARY) < 0
                 || salarioBase.compareTo(MAXIMUM_SALARY) > 0) {
             throw new UserValidationException("El salario base debe estar entre 0 y 15000000.");
+        }
+    }
+
+    private static void ensureMaximumLength(String value, int maximum, String field) {
+        if (value != null && value.length() > maximum) {
+            throw new UserValidationException(
+                    "El campo '" + field + "' no puede superar " + maximum + " caracteres.");
         }
     }
 

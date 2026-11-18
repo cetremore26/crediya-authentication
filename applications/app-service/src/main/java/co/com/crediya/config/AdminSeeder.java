@@ -15,7 +15,8 @@ import org.springframework.stereotype.Component;
 /**
  * Creates the first administrator so that the rest of the users can be registered.
  * It only supplies the data: normalizing, validating and checking for duplicates is done by
- * {@link RegisterUserUseCase}, as for any other user.
+ * {@link RegisterUserUseCase}, as for any other user. The bootstrap acts with the authority
+ * of an administrator, because there is no one else yet who could register one.
  */
 @Component
 public class AdminSeeder implements ApplicationRunner {
@@ -46,7 +47,7 @@ public class AdminSeeder implements ApplicationRunner {
                     .salarioBase(BigDecimal.ZERO)
                     .clave(adminPassword)
                     .rol(Rol.ADMIN)
-                    .build());
+                    .build(), Rol.ADMIN);
             LOGGER.info("Administrador inicial creado.");
         } catch (UserAlreadyExistsException exception) {
             LOGGER.info("El administrador inicial ya existe.");
