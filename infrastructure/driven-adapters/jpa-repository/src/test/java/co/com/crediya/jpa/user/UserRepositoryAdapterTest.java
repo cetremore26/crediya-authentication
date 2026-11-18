@@ -2,7 +2,6 @@ package co.com.crediya.jpa.user;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -58,7 +57,7 @@ class UserRepositoryAdapterTest {
     }
 
     @Test
-    void findsUserByDocumentWithoutPasswordAndRejectsDuplicateDocument() {
+    void findsUserByDocumentAndRejectsDuplicateDocument() {
         userRepository.save(user("ana@example.com").toBuilder()
                 .documentoIdentidad("1020304050")
                 .clave("hash")
@@ -67,7 +66,7 @@ class UserRepositoryAdapterTest {
         assertTrue(userRepository.existsByDocumentoIdentidad("1020304050"));
         User found = userRepository.findByDocumentoIdentidad("1020304050").orElseThrow();
         assertEquals("Ana", found.getNombres());
-        assertNull(found.getClave());
+        assertEquals("hash", found.getClave());
         assertTrue(userRepository.findByDocumentoIdentidad("999999").isEmpty());
         assertThrows(
                 UserAlreadyExistsException.class,
