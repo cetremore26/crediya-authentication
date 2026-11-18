@@ -63,10 +63,13 @@ public class UserLookupController {
     @ApiResponse(responseCode = "200", description = "Usuarios encontrados")
     @ApiResponse(responseCode = "400", description = "Lista de documentos vacía o demasiado grande",
             content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    @ApiResponse(responseCode = "403", description = "Solo ADMIN o ASESOR",
+            content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     public ResponseEntity<List<UserDetailResponse>> findByDocuments(
-            @RequestParam(value = "documentos", required = false) List<String> documentos) {
+            @RequestParam(value = "documentos", required = false) List<String> documentos,
+            @AuthenticationPrincipal AuthenticatedUser solicitante) {
         LOGGER.info("Consulta de usuarios por lote de documentos.");
-        List<UserDetailResponse> users = listUsersByDocumentsUseCase.execute(documentos).stream()
+        List<UserDetailResponse> users = listUsersByDocumentsUseCase.execute(documentos, solicitante).stream()
                 .map(UserDetailResponse::from)
                 .toList();
         return ResponseEntity.ok(users);

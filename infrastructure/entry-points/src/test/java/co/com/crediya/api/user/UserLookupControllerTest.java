@@ -56,7 +56,7 @@ class UserLookupControllerTest {
 
     @Test
     void returnsUsersForRequestedDocuments() throws Exception {
-        when(useCase.execute(List.of("111111", "222222"))).thenReturn(List.of(User.builder()
+        when(useCase.execute(List.of("111111", "222222"), ASESOR)).thenReturn(List.of(User.builder()
                 .documentoIdentidad("111111")
                 .nombres("Ana")
                 .apellidos("Pérez")
@@ -75,7 +75,7 @@ class UserLookupControllerTest {
 
     @Test
     void returnsBadRequestWhenDocumentsAreMissing() throws Exception {
-        when(useCase.execute(null))
+        when(useCase.execute(null, ASESOR))
                 .thenThrow(new UserValidationException("Debe indicar al menos un documento."));
 
         mockMvc.perform(get("/api/v1/usuarios"))
