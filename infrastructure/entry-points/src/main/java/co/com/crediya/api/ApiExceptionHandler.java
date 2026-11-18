@@ -10,10 +10,13 @@ import co.com.crediya.model.user.exception.UserValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -73,13 +76,41 @@ public class ApiExceptionHandler {
                 "El cuerpo de la solicitud no tiene un formato válido.");
     }
 
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidParameter(
+            MethodArgumentTypeMismatchException exception) {
+        LOGGER.warn("Parámetro inválido: {}", exception.getName());
+        return error(
+                HttpStatus.BAD_REQUEST,
+                "PARAMETRO_INVALIDO",
+                "El valor del parámetro '" + exception.getName() + "' no es válido.");
+    }
+
+    /**
+     * Errores que no esperamos. Las excepciones propias de Spring MVC (ruta inexistente,
+     * método o tipo de contenido no soportado, etc.) traen su estado HTTP y se responden con él
+     * en vez de un 500.
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnexpected(Exception exception) {
+        if (exception instanceof ErrorResponse errorResponse) {
+            return handleFrameworkError(errorResponse);
+        }
         LOGGER.error("Error inesperado al procesar la solicitud.", exception);
         return error(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "ERROR_INTERNO",
                 "Ocurrió un error interno. Intente nuevamente más tarde.");
+    }
+
+    private ResponseEntity<ApiErrorResponse> handleFrameworkError(ErrorResponse errorResponse) {
+        HttpStatusCode status = errorResponse.getStatusCode();
+        LOGGER.warn("Solicitud HTTP no soportada: {}", status);
+        return ResponseEntity.status(status)
+                .body(new ApiErrorResponse(
+                        status.value(),
+                        "SOLICITUD_NO_SOPORTADA",
+                        "La solicitud no puede ser procesada por este servicio."));
     }
 
     private ResponseEntity<ApiErrorResponse> error(
