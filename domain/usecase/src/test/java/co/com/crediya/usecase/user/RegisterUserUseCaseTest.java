@@ -7,6 +7,7 @@ import co.com.crediya.model.auth.gateways.PasswordHasher;
 import co.com.crediya.model.user.Rol;
 import co.com.crediya.model.user.User;
 import co.com.crediya.model.user.exception.DocumentAlreadyRegisteredException;
+import co.com.crediya.model.user.exception.RolNoPermitidoException;
 import co.com.crediya.model.user.exception.UserAlreadyExistsException;
 import co.com.crediya.model.user.gateways.UserRepository;
 import co.com.crediya.model.user.exception.UserValidationException;
@@ -25,7 +26,7 @@ class RegisterUserUseCaseTest {
                 .correoElectronico("  solicitante@example.com  ")
                 .build();
 
-        User saved = useCase.execute(user);
+        User saved = useCase.execute(user, Rol.ADMIN);
 
         assertEquals("solicitante@example.com", saved.getCorreoElectronico());
         assertEquals(saved, repository.savedUsers.get(0));
@@ -33,7 +34,7 @@ class RegisterUserUseCaseTest {
 
     @Test
     void rejectsNullUser() {
-        assertThrows(UserValidationException.class, () -> useCase.execute(null));
+        assertThrows(UserValidationException.class, () -> useCase.execute(null, Rol.ADMIN));
     }
 
     @Test
@@ -45,7 +46,7 @@ class RegisterUserUseCaseTest {
                 validUser().toBuilder().salarioBase(null).build());
 
         for (User user : invalidUsers) {
-            assertThrows(UserValidationException.class, () -> useCase.execute(user));
+            assertThrows(UserValidationException.class, () -> useCase.execute(user, Rol.ADMIN));
         }
         assertEquals(0, repository.savedUsers.size());
     }
@@ -56,7 +57,7 @@ class RegisterUserUseCaseTest {
                 .correoElectronico("correo-invalido")
                 .build();
 
-        assertThrows(UserValidationException.class, () -> useCase.execute(user));
+        assertThrows(UserValidationException.class, () -> useCase.execute(user, Rol.ADMIN));
         assertEquals(0, repository.savedUsers.size());
     }
 
@@ -67,17 +68,17 @@ class RegisterUserUseCaseTest {
                 validUser().toBuilder().salarioBase(new BigDecimal("15000000.01")).build());
 
         for (User user : invalidUsers) {
-            assertThrows(UserValidationException.class, () -> useCase.execute(user));
+            assertThrows(UserValidationException.class, () -> useCase.execute(user, Rol.ADMIN));
         }
         assertEquals(0, repository.savedUsers.size());
     }
 
     @Test
     void acceptsSalaryAtBothRangeBoundaries() {
-        useCase.execute(validUser().toBuilder().salarioBase(BigDecimal.ZERO).build());
+        useCase.execute(validUser().toBuilder().salarioBase(BigDecimal.ZERO).build(), Rol.ADMIN);
         useCase.execute(validUser().toBuilder()
                 .salarioBase(new BigDecimal("15000000"))
-                .build());
+                .build(), Rol.ADMIN);
 
         assertEquals(2, repository.savedUsers.size());
     }
@@ -86,13 +87,14 @@ class RegisterUserUseCaseTest {
     void rejectsAlreadyRegisteredEmail() {
         repository.emailAlreadyExists = true;
 
-        assertThrows(UserAlreadyExistsException.class, () -> useCase.execute(validUser()));
+        assertThrows(UserAlreadyExistsException.class, () -> useCase.execute(validUser(), Rol.ADMIN));
         assertEquals(0, repository.savedUsers.size());
     }
 
     @Test
     void registersUserWithValidDocument() {
-        User saved = useCase.execute(validUser().toBuilder().documentoIdentidad(" 1020304050 ").build());
+        User saved = useCase.execute(
+                validUser().toBuilder().documentoIdentidad(" 1020304050 ").build(), Rol.ADMIN);
 
         assertEquals("1020304050", saved.getDocumentoIdentidad());
     }
@@ -101,7 +103,7 @@ class RegisterUserUseCaseTest {
     void rejectsInvalidDocumentFormat() {
         User user = validUser().toBuilder().documentoIdentidad("12ab").build();
 
-        assertThrows(UserValidationException.class, () -> useCase.execute(user));
+        assertThrows(UserValidationException.class, () -> useCase.execute(user, Rol.ADMIN));
     }
 
     @Test
@@ -109,7 +111,7 @@ class RegisterUserUseCaseTest {
         repository.documentAlreadyExists = true;
         User user = validUser().toBuilder().documentoIdentidad("1020304050").build();
 
-        assertThrows(DocumentAlreadyRegisteredException.class, () -> useCase.execute(user));
+        assertThrows(DocumentAlreadyRegisteredException.class, () -> useCase.execute(user, Rol.ADMIN));
         assertEquals(0, repository.savedUsers.size());
     }
 
@@ -117,7 +119,7 @@ class RegisterUserUseCaseTest {
     void lowercasesEmailBeforeSaving() {
         User saved = useCase.execute(validUser().toBuilder()
                 .correoElectronico("Ana@Example.COM")
-                .build());
+                .build(), Rol.ADMIN);
 
         assertEquals("ana@example.com", saved.getCorreoElectronico());
     }
@@ -135,7 +137,7 @@ class RegisterUserUseCaseTest {
 
     @Test
     void hashesPasswordAndDefaultsRoleToClient() {
-        User saved = useCase.execute(validUser());
+        User saved = useCase.execute(validUser(), Rol.ADMIN);
 
         assertEquals("hash:Clave1234", saved.getClave());
         assertEquals(Rol.CLIENTE, saved.getRol());
@@ -146,16 +148,73 @@ class RegisterUserUseCaseTest {
         User saved = useCase.execute(validUser().toBuilder()
                 .rol(Rol.ASESOR)
                 .documentoIdentidad(null)
-                .build());
+                .build(), Rol.ADMIN);
 
         assertEquals(Rol.ASESOR, saved.getRol());
+    }
+
+    @Test
+    void adminCanRegisterEveryRole() {
+        for (Rol rol : Rol.values()) {
+            useCase.execute(validUser().toBuilder()
+                    .rol(rol)
+                    .correoElectronico(rol.name().toLowerCase() + "@example.com")
+                    .build(), Rol.ADMIN);
+        }
+
+        assertEquals(Rol.values().length, repository.savedUsers.size());
+    }
+
+    @Test
+    void advisorCanRegisterClients() {
+        User saved = useCase.execute(validUser(), Rol.ASESOR);
+
+        assertEquals(Rol.CLIENTE, saved.getRol());
+    }
+
+    @Test
+    void advisorCannotRegisterStaff() {
+        for (Rol rol : List.of(Rol.ADMIN, Rol.ASESOR)) {
+            User user = validUser().toBuilder().rol(rol).build();
+
+            assertThrows(RolNoPermitidoException.class, () -> useCase.execute(user, Rol.ASESOR));
+        }
+        assertEquals(0, repository.savedUsers.size());
+    }
+
+    @Test
+    void clientOrUnknownRequesterCannotRegisterUsers() {
+        assertThrows(RolNoPermitidoException.class, () -> useCase.execute(validUser(), Rol.CLIENTE));
+        assertThrows(RolNoPermitidoException.class, () -> useCase.execute(validUser(), null));
+        assertEquals(0, repository.savedUsers.size());
+    }
+
+    @Test
+    void rejectsPasswordLongerThan72BytesEvenWithFewerCharacters() {
+        User user = validUser().toBuilder().clave("ñ".repeat(37)).build();
+
+        assertThrows(UserValidationException.class, () -> useCase.execute(user, Rol.ADMIN));
+    }
+
+    @Test
+    void rejectsFieldsLongerThanTheStorageAllows() {
+        List<User> invalidUsers = List.of(
+                validUser().toBuilder().nombres("a".repeat(151)).build(),
+                validUser().toBuilder().apellidos("a".repeat(151)).build(),
+                validUser().toBuilder().direccion("a".repeat(301)).build(),
+                validUser().toBuilder().telefono("1".repeat(51)).build());
+
+        for (User user : invalidUsers) {
+            assertThrows(UserValidationException.class, () -> useCase.execute(user, Rol.ADMIN));
+        }
+        assertEquals(0, repository.savedUsers.size());
     }
 
     @Test
     void requiresDocumentForClients() {
         User user = validUser().toBuilder().documentoIdentidad(null).build();
 
-        assertThrows(UserValidationException.class, () -> useCase.execute(user));
+        assertThrows(UserValidationException.class, () -> useCase.execute(user, Rol.ADMIN));
     }
 
     @Test
@@ -166,7 +225,7 @@ class RegisterUserUseCaseTest {
                 validUser().toBuilder().clave("x".repeat(73)).build());
 
         for (User user : invalidUsers) {
-            assertThrows(UserValidationException.class, () -> useCase.execute(user));
+            assertThrows(UserValidationException.class, () -> useCase.execute(user, Rol.ADMIN));
         }
     }
 
