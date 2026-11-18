@@ -4,7 +4,6 @@ import co.com.crediya.jpa.helper.AdapterOperations;
 import co.com.crediya.model.user.User;
 import co.com.crediya.model.user.exception.UserAlreadyExistsException;
 import co.com.crediya.model.user.gateways.UserRepository;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import org.hibernate.exception.ConstraintViolationException;
@@ -58,16 +57,15 @@ public class UserRepositoryAdapter
     @Transactional
     public User save(User user) {
         UUID id = user.getId() == null ? UUID.randomUUID() : user.getId();
-        String email = user.getCorreoElectronico().trim().toLowerCase(Locale.ROOT);
 
         User saved;
         try {
-            saved = super.save(user.toBuilder().id(id).correoElectronico(email).build());
+            saved = super.save(user.toBuilder().id(id).build());
         } catch (DataIntegrityViolationException exception) {
             if (!isUniqueViolation(exception)) {
                 throw exception;
             }
-            LOGGER.warn("Violación de unicidad de correo al guardar usuario.");
+            LOGGER.warn("Violación de unicidad al guardar usuario.");
             throw new UserAlreadyExistsException();
         }
 

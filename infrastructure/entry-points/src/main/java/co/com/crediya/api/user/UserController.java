@@ -3,7 +3,6 @@ package co.com.crediya.api.user;
 import co.com.crediya.model.user.User;
 import co.com.crediya.usecase.user.FindUserByDocumentUseCase;
 import co.com.crediya.usecase.user.RegisterUserUseCase;
-import co.com.crediya.usecase.user.exception.UserValidationException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -46,9 +45,6 @@ public class UserController {
     @ApiResponse(responseCode = "409", description = "El correo electrónico ya está registrado",
             content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     public ResponseEntity<UserResponse> register(@RequestBody UserRequest request) {
-        if (request == null) {
-            throw new UserValidationException("El cuerpo de la solicitud es obligatorio.");
-        }
         LOGGER.info("Solicitud de registro de usuario recibida.");
         registerUserUseCase.execute(request.toDomain());
         LOGGER.info("Usuario registrado exitosamente.");

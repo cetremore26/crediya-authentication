@@ -9,7 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import co.com.crediya.api.ApiExceptionHandler;
 import co.com.crediya.model.user.User;
 import co.com.crediya.usecase.user.ListUsersByDocumentsUseCase;
-import co.com.crediya.usecase.user.exception.UserValidationException;
+import co.com.crediya.model.user.exception.UserValidationException;
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;

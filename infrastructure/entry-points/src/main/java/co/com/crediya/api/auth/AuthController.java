@@ -3,7 +3,7 @@ package co.com.crediya.api.auth;
 import co.com.crediya.api.ApiErrorResponse;
 import co.com.crediya.model.auth.AccessToken;
 import co.com.crediya.usecase.user.LoginUseCase;
-import co.com.crediya.usecase.user.exception.UserValidationException;
+import co.com.crediya.model.user.exception.UserValidationException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

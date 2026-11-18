@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import co.com.crediya.model.user.User;
 import co.com.crediya.model.user.gateways.UserRepository;
-import co.com.crediya.usecase.user.exception.UserValidationException;
+import co.com.crediya.model.user.exception.UserValidationException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;

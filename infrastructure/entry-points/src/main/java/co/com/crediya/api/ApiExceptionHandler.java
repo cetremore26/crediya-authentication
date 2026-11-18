@@ -1,9 +1,10 @@
 package co.com.crediya.api;
 
 import co.com.crediya.model.auth.exception.InvalidCredentialsException;
+import co.com.crediya.model.user.exception.DocumentAlreadyRegisteredException;
 import co.com.crediya.model.user.exception.UserAlreadyExistsException;
 import co.com.crediya.model.user.exception.UserNotFoundException;
-import co.com.crediya.usecase.user.exception.UserValidationException;
+import co.com.crediya.model.user.exception.UserValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -18,8 +19,15 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(UserValidationException.class)
     public ResponseEntity<ApiErrorResponse> handleValidation(UserValidationException exception) {
-        LOGGER.warn("Validación fallida al registrar usuario: {}", exception.getMessage());
+        LOGGER.warn("Validación fallida: {}", exception.getMessage());
         return error(HttpStatus.BAD_REQUEST, "DATOS_INVALIDOS", exception.getMessage());
+    }
+
+    @ExceptionHandler(DocumentAlreadyRegisteredException.class)
+    public ResponseEntity<ApiErrorResponse> handleDuplicateDocument(
+            DocumentAlreadyRegisteredException exception) {
+        LOGGER.warn("Intento de registro con documento duplicado.");
+        return error(HttpStatus.CONFLICT, "DOCUMENTO_DUPLICADO", exception.getMessage());
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)
@@ -53,7 +61,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnexpected(Exception exception) {
-        LOGGER.error("Error inesperado al procesar la solicitud de registro de usuario.", exception);
+        LOGGER.error("Error inesperado al procesar la solicitud.", exception);
         return error(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "ERROR_INTERNO",

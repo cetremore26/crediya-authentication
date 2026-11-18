@@ -10,7 +10,7 @@ import co.com.crediya.model.auth.gateways.TokenProvider;
 import co.com.crediya.model.user.Rol;
 import co.com.crediya.model.user.User;
 import co.com.crediya.model.user.gateways.UserRepository;
-import co.com.crediya.usecase.user.exception.UserValidationException;
+import co.com.crediya.model.user.exception.UserValidationException;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 

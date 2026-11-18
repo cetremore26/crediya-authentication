@@ -2,7 +2,7 @@ package co.com.crediya.usecase.user;
 
 import co.com.crediya.model.user.User;
 import co.com.crediya.model.user.gateways.UserRepository;
-import co.com.crediya.usecase.user.exception.UserValidationException;
+import co.com.crediya.model.user.exception.UserValidationException;
 import java.util.Collection;
 import java.util.List;
 
