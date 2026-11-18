@@ -47,11 +47,29 @@ Este módulo es el más externo de la arquitectura, es el encargado de ensamblar
 **Los beans de los casos de uso se disponibilizan automaticamente gracias a un '@ComponentScan' ubicado en esta capa.**
 # crediya-authentication
 
-## Configuración de base de datos
+## Configuración
 
-Persistencia con JPA sobre PostgreSQL. Levanta la base con `docker compose up -d` desde la carpeta `CREDIYA`.
+Los secretos **no tienen valor por defecto**: si faltan, el servicio no arranca. Para desarrollo
+local activa el perfil `local` (`SPRING_PROFILES_ACTIVE=local`), que trae valores de desarrollo.
 
-- `DB_URL` (`jdbc:postgresql://localhost:5432/crediya_auth` por defecto)
-- `DB_USERNAME` / `DB_PASSWORD` (`crediya` / `crediya_auth_pass` por defecto, los del `docker-compose.yml`)
-- `DB_DRIVER` (`org.postgresql.Driver`) y `DB_DIALECT` (`org.hibernate.dialect.PostgreSQLDialect`)
-- `DB_DDL_AUTO` (`none`): el esquema lo crea `schema.sql` al arrancar.
+| Variable | Obligatoria | Descripción |
+|---|---|---|
+| `DB_PASSWORD` | sí | Clave de PostgreSQL (`local`: `crediya_auth_pass`, la del `docker-compose.yml`) |
+| `JWT_PRIVATE_KEY` | sí | Clave RSA privada en PEM PKCS#8 para firmar tokens RS256 (`local`: se genera una temporal) |
+| `ADMIN_PASSWORD` | sí | Clave del administrador inicial (`local`: `Admin12345`) |
+| `ADMIN_EMAIL` | no | Correo del administrador inicial (`admin@crediya.com`) |
+| `JWT_EXPIRATION_SECONDS` | no | Vigencia del token (`3600`) |
+| `DB_URL` | no | `jdbc:postgresql://localhost:5432/crediya_auth` |
+| `DB_USERNAME` | no | `crediya` |
+| `DB_DRIVER` / `DB_DIALECT` | no | `org.postgresql.Driver` / `org.hibernate.dialect.PostgreSQLDialect` |
+| `DB_DDL_AUTO` | no | `none`: el esquema lo crea `schema.sql` al arrancar |
+
+Generar la clave JWT:
+
+```bash
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out jwt-private.pem
+```
+
+La clave pública se publica en `GET /.well-known/jwks.json`; `crediya-solicitudes` la usa para verificar los tokens.
+
+Levanta la base con `docker compose up -d` desde la carpeta `CREDIYA`.

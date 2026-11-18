@@ -1,5 +1,13 @@
 # Perfil solo para desarrollo local: SPRING_PROFILES_ACTIVE=local
+# Trae valores de desarrollo para lo que en application.yaml es obligatorio.
+# Nunca activar este perfil en producción.
+spring:
+  datasource:
+    password: ${DB_PASSWORD:crediya_auth_pass}
+crediya:
+  admin:
+    password: ${ADMIN_PASSWORD:Admin12345}
 jwt:
   # Sin JWT_PRIVATE_KEY se genera una clave RSA temporal al arrancar (los tokens
-  # dejan de valer al reiniciar). Nunca activar este perfil en producción.
+  # dejan de valer al reiniciar).
   generate-ephemeral-key: true
