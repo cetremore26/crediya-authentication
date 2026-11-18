@@ -62,7 +62,7 @@ local activa el perfil `local` (`SPRING_PROFILES_ACTIVE=local`), que trae valore
 | `DB_URL` | no | `jdbc:postgresql://localhost:5432/crediya_auth` |
 | `DB_USERNAME` | no | `crediya` |
 | `DB_DRIVER` / `DB_DIALECT` | no | `org.postgresql.Driver` / `org.hibernate.dialect.PostgreSQLDialect` |
-| `DB_DDL_AUTO` | no | `none`: el esquema lo crea `schema.sql` al arrancar |
+| `DB_DDL_AUTO` | no | `validate`: el esquema lo crean las migraciones de Flyway (`db/migration`) |
 
 Generar la clave JWT:
 

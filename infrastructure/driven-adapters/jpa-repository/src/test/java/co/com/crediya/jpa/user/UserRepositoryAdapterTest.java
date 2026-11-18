@@ -105,6 +105,7 @@ class UserRepositoryAdapterTest {
                 .apellidos("Pérez")
                 .correoElectronico(email)
                 .salarioBase(new BigDecimal("2500000"))
+                .rol(Rol.CLIENTE)
                 .build();
     }
 }
