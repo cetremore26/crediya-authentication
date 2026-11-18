@@ -1,0 +1,5 @@
+# Perfil solo para desarrollo local: SPRING_PROFILES_ACTIVE=local
+jwt:
+  # Sin JWT_PRIVATE_KEY se genera una clave RSA temporal al arrancar (los tokens
+  # dejan de valer al reiniciar). Nunca activar este perfil en producción.
+  generate-ephemeral-key: true

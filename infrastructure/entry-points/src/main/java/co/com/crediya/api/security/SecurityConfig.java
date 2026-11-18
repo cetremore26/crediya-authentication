@@ -1,5 +1,6 @@
 package co.com.crediya.api.security;
 
+import co.com.crediya.api.auth.JwksController;
 import co.com.crediya.model.auth.gateways.TokenVerifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,7 +20,8 @@ public class SecurityConfig {
     private static final String ROLE_ADMIN = "ADMIN";
     private static final String ROLE_ASESOR = "ASESOR";
     private static final String[] PUBLIC_PATHS = {
-            "/api/v1/login", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
+            "/api/v1/login", JwksController.JWKS_PATH,
+            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
     };
 
     @Bean
