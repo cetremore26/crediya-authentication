@@ -1,5 +1,6 @@
 package co.com.crediya.api.security;
 
+import co.com.crediya.api.ApiErrorResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -9,11 +10,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import tools.jackson.databind.json.JsonMapper;
 
+/**
+ * Respuestas JSON de seguridad (401/403) con el mismo formato que {@link ApiErrorResponse}.
+ * Se serializan con Jackson para que el cuerpo siempre sea JSON válido.
+ */
 public final class SecurityErrorHandlers {
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityErrorHandlers.class);
-    private static final String BODY_TEMPLATE =
-            "{\"status\":%d,\"codigo\":\"%s\",\"mensaje\":\"%s\"}";
+    private static final JsonMapper JSON = JsonMapper.builder().build();
 
     private SecurityErrorHandlers() {
     }
@@ -40,6 +45,7 @@ public final class SecurityErrorHandlers {
         response.setStatus(status.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        response.getWriter().write(String.format(BODY_TEMPLATE, status.value(), code, message));
+        response.getWriter().write(
+                JSON.writeValueAsString(new ApiErrorResponse(status.value(), code, message)));
     }
 }

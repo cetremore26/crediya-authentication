@@ -11,6 +11,8 @@ import co.com.crediya.model.user.Rol;
 import co.com.crediya.model.user.User;
 import co.com.crediya.model.user.gateways.UserRepository;
 import co.com.crediya.model.user.exception.UserValidationException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
@@ -54,6 +56,30 @@ class LoginUseCaseTest {
     void rejectsUnknownEmail() {
         assertThrows(
                 InvalidCredentialsException.class, () -> useCase.execute("nadie@example.com", PASSWORD));
+    }
+
+    @Test
+    void verifiesAPasswordEvenWhenTheEmailIsUnknownSoTimingDoesNotRevealIt() {
+        List<String> verifiedHashes = new ArrayList<>();
+        PasswordHasher recordingHasher = new PasswordHasher() {
+            @Override
+            public String hash(String rawPassword) {
+                return passwordHasher.hash(rawPassword);
+            }
+
+            @Override
+            public boolean matches(String rawPassword, String hashedPassword) {
+                verifiedHashes.add(hashedPassword);
+                return passwordHasher.matches(rawPassword, hashedPassword);
+            }
+        };
+        LoginUseCase loginUseCase = new LoginUseCase(userRepository, recordingHasher, tokenProvider);
+
+        assertThrows(InvalidCredentialsException.class,
+                () -> loginUseCase.execute("nadie@example.com", PASSWORD));
+        assertThrows(InvalidCredentialsException.class, () -> loginUseCase.execute(EMAIL, "otra"));
+
+        assertEquals(2, verifiedHashes.size());
     }
 
     @Test
