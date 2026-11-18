@@ -22,7 +22,10 @@ spring:
   profiles:
     include:
 jwt:
-  secret: ${JWT_SECRET:dev-only-secret-change-me-in-production-0123456789}
+  # Clave RSA privada (PEM PKCS#8) con la que se firman los tokens RS256. Obligatoria:
+  # generar con `openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048`.
+  private-key: ${JWT_PRIVATE_KEY:}
+  generate-ephemeral-key: false
   expiration-seconds: ${JWT_EXPIRATION_SECONDS:3600}
 crediya:
   admin:
