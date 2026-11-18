@@ -3,10 +3,15 @@ package co.com.crediya.usecase.user;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import co.com.crediya.model.auth.AuthenticatedUser;
+import co.com.crediya.model.auth.exception.AccesoDenegadoException;
+import co.com.crediya.model.user.Rol;
 import co.com.crediya.model.user.User;
 import co.com.crediya.model.user.exception.UserNotFoundException;
 import co.com.crediya.model.user.gateways.UserRepository;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class FindUserByDocumentUseCaseTest {
@@ -43,12 +48,34 @@ class FindUserByDocumentUseCaseTest {
     private final FindUserByDocumentUseCase useCase = new FindUserByDocumentUseCase(repository);
 
     @Test
-    void returnsUserWhenDocumentExists() {
-        assertEquals(DOCUMENTO, useCase.execute(DOCUMENTO).getDocumentoIdentidad());
+    void staffFindsAnyRegisteredDocument() {
+        for (Rol rol : List.of(Rol.ADMIN, Rol.ASESOR)) {
+            assertEquals(DOCUMENTO, useCase.execute(DOCUMENTO, requester(rol, null)).getDocumentoIdentidad());
+        }
+    }
+
+    @Test
+    void clientFindsOnlyTheirOwnDocument() {
+        assertEquals(DOCUMENTO,
+                useCase.execute(DOCUMENTO, requester(Rol.CLIENTE, DOCUMENTO)).getDocumentoIdentidad());
+        assertThrows(AccesoDenegadoException.class,
+                () -> useCase.execute(DOCUMENTO, requester(Rol.CLIENTE, "5555555")));
+    }
+
+    @Test
+    void deniesBeforeRevealingWhetherTheDocumentExists() {
+        assertThrows(AccesoDenegadoException.class,
+                () -> useCase.execute("999999", requester(Rol.CLIENTE, DOCUMENTO)));
+        assertThrows(AccesoDenegadoException.class, () -> useCase.execute(DOCUMENTO, null));
     }
 
     @Test
     void throwsWhenDocumentDoesNotExist() {
-        assertThrows(UserNotFoundException.class, () -> useCase.execute("999999"));
+        assertThrows(UserNotFoundException.class,
+                () -> useCase.execute("999999", requester(Rol.ASESOR, null)));
+    }
+
+    private static AuthenticatedUser requester(Rol rol, String documento) {
+        return new AuthenticatedUser(UUID.randomUUID(), "usuario@crediya.com", rol, documento);
     }
 }

@@ -1,5 +1,6 @@
 package co.com.crediya.api;
 
+import co.com.crediya.model.auth.exception.AccesoDenegadoException;
 import co.com.crediya.model.auth.exception.InvalidCredentialsException;
 import co.com.crediya.model.user.exception.DocumentAlreadyRegisteredException;
 import co.com.crediya.model.user.exception.RolNoPermitidoException;
@@ -41,6 +42,12 @@ public class ApiExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleRoleNotAllowed(RolNoPermitidoException exception) {
         LOGGER.warn("Registro rechazado: el solicitante no puede asignar el rol pedido.");
         return error(HttpStatus.FORBIDDEN, "ROL_NO_PERMITIDO", exception.getMessage());
+    }
+
+    @ExceptionHandler(AccesoDenegadoException.class)
+    public ResponseEntity<ApiErrorResponse> handleAccessDenied(AccesoDenegadoException exception) {
+        LOGGER.warn("Operación rechazada: el usuario no tiene permiso.");
+        return error(HttpStatus.FORBIDDEN, "ACCESO_DENEGADO", exception.getMessage());
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)
