@@ -1,6 +1,7 @@
 package co.com.crediya.api.user;
 
 import co.com.crediya.api.ApiErrorResponse;
+import co.com.crediya.model.auth.AuthenticatedUser;
 import co.com.crediya.usecase.user.FindUserByDocumentUseCase;
 import co.com.crediya.usecase.user.ListUsersByDocumentsUseCase;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +13,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,14 +42,19 @@ public class UserLookupController {
 
     @GetMapping("/documento/{documento}")
     @Operation(summary = "Consultar un usuario por documento de identidad",
-            description = "Usado por otros microservicios para verificar la existencia de un cliente.")
+            description = "Usado por otros microservicios para verificar la existencia de un cliente. "
+                    + "ADMIN y ASESOR consultan cualquier documento; un CLIENTE solo el suyo.")
     @ApiResponse(responseCode = "200", description = "Usuario encontrado")
+    @ApiResponse(responseCode = "403", description = "Un CLIENTE consultando otro documento",
+            content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     @ApiResponse(responseCode = "404", description = "No existe un usuario con ese documento",
             content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     public ResponseEntity<UserDocumentResponse> findByDocument(
-            @PathVariable("documento") String documento) {
+            @PathVariable("documento") String documento,
+            @AuthenticationPrincipal AuthenticatedUser solicitante) {
         LOGGER.info("Consulta de usuario por documento de identidad.");
-        return ResponseEntity.ok(UserDocumentResponse.from(findUserByDocumentUseCase.execute(documento)));
+        return ResponseEntity.ok(UserDocumentResponse.from(
+                findUserByDocumentUseCase.execute(documento, solicitante)));
     }
 
     @GetMapping

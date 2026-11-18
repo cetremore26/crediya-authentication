@@ -7,6 +7,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import co.com.crediya.api.ApiExceptionHandler;
+import co.com.crediya.model.auth.AuthenticatedUser;
+import co.com.crediya.model.auth.exception.AccesoDenegadoException;
+import co.com.crediya.model.user.Rol;
 import co.com.crediya.model.user.User;
 import co.com.crediya.model.user.exception.UserNotFoundException;
 import co.com.crediya.usecase.user.FindUserByDocumentUseCase;
@@ -14,12 +17,21 @@ import co.com.crediya.usecase.user.ListUsersByDocumentsUseCase;
 import co.com.crediya.model.user.exception.UserValidationException;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 class UserLookupControllerTest {
+    private static final AuthenticatedUser ASESOR =
+            new AuthenticatedUser(UUID.randomUUID(), "asesor@crediya.com", Rol.ASESOR, null);
+
     private ListUsersByDocumentsUseCase useCase;
     private FindUserByDocumentUseCase findUserByDocumentUseCase;
     private MockMvc mockMvc;
@@ -31,7 +43,15 @@ class UserLookupControllerTest {
         mockMvc = MockMvcBuilders.standaloneSetup(
                         new UserLookupController(findUserByDocumentUseCase, useCase))
                 .setControllerAdvice(new ApiExceptionHandler())
+                .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
                 .build();
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                ASESOR, null, List.of(new SimpleGrantedAuthority("ROLE_ASESOR"))));
+    }
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -65,7 +85,7 @@ class UserLookupControllerTest {
 
     @Test
     void returnsUserWhenDocumentExists() throws Exception {
-        when(findUserByDocumentUseCase.execute("1020304050")).thenReturn(User.builder()
+        when(findUserByDocumentUseCase.execute("1020304050", ASESOR)).thenReturn(User.builder()
                 .documentoIdentidad("1020304050")
                 .nombres("Ana")
                 .apellidos("Pérez")
@@ -81,10 +101,20 @@ class UserLookupControllerTest {
 
     @Test
     void returnsNotFoundWhenDocumentDoesNotExist() throws Exception {
-        when(findUserByDocumentUseCase.execute("999999")).thenThrow(new UserNotFoundException());
+        when(findUserByDocumentUseCase.execute("999999", ASESOR)).thenThrow(new UserNotFoundException());
 
         mockMvc.perform(get("/api/v1/usuarios/documento/999999"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.codigo").value("USUARIO_NO_ENCONTRADO"));
+    }
+
+    @Test
+    void returnsForbiddenWhenTheRequesterCannotSeeTheDocument() throws Exception {
+        when(findUserByDocumentUseCase.execute("1020304050", ASESOR))
+                .thenThrow(new AccesoDenegadoException("Solo puede consultar sus propios datos."));
+
+        mockMvc.perform(get("/api/v1/usuarios/documento/1020304050"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.codigo").value("ACCESO_DENEGADO"));
     }
 }
