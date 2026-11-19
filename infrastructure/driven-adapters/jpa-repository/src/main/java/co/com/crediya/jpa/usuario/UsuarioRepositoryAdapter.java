@@ -5,6 +5,8 @@ import co.com.crediya.model.usuario.Usuario;
 import co.com.crediya.model.usuario.exception.DocumentoYaRegistradoException;
 import co.com.crediya.model.usuario.exception.UsuarioYaRegistradoException;
 import co.com.crediya.model.usuario.gateways.UsuarioRepository;
+import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,12 +33,12 @@ public class UsuarioRepositoryAdapter
 
     @Override
     public boolean existePorCorreoElectronico(String correoElectronico) {
-        return repository.existsByCorreoElectronicoIgnoreCase(correoElectronico);
+        return repository.existsByCorreoElectronico(correoElectronico);
     }
 
     @Override
     public Optional<Usuario> buscarPorCorreoElectronico(String correoElectronico) {
-        return repository.findByCorreoElectronicoIgnoreCase(correoElectronico).map(this::toEntity);
+        return repository.findByCorreoElectronico(correoElectronico).map(this::toEntity);
     }
 
     @Override
@@ -47,6 +49,14 @@ public class UsuarioRepositoryAdapter
     @Override
     public Optional<Usuario> buscarPorDocumentoIdentidad(String documentoIdentidad) {
         return repository.findByDocumentoIdentidad(documentoIdentidad).map(this::toEntity);
+    }
+
+    @Override
+    public List<Usuario> buscarPorDocumentosIdentidad(Collection<String> documentosIdentidad) {
+        if (documentosIdentidad.isEmpty()) {
+            return List.of();
+        }
+        return toList(repository.findByDocumentoIdentidadIn(documentosIdentidad));
     }
 
     /**

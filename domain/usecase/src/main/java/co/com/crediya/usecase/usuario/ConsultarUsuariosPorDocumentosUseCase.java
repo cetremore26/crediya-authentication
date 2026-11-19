@@ -7,7 +7,6 @@ import co.com.crediya.model.usuario.exception.UsuarioInvalidoException;
 import co.com.crediya.model.usuario.gateways.UsuarioRepository;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Consulta por lote los usuarios de varios documentos, para que el personal revise solicitudes.
@@ -38,11 +37,11 @@ public class ConsultarUsuariosPorDocumentosUseCase {
             throw new UsuarioInvalidoException(
                     "No se pueden consultar más de " + MAXIMO_DOCUMENTOS + " documentos a la vez.");
         }
-        return documentos.stream()
+        List<String> distintos = documentos.stream()
+                .filter(documento -> documento != null && !documento.isBlank())
                 .map(String::trim)
                 .distinct()
-                .map(usuarioRepository::buscarPorDocumentoIdentidad)
-                .flatMap(Optional::stream)
                 .toList();
+        return distintos.isEmpty() ? List.of() : usuarioRepository.buscarPorDocumentosIdentidad(distintos);
     }
 }

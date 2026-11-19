@@ -12,6 +12,7 @@ import co.com.crediya.model.usuario.Usuario;
 import co.com.crediya.model.usuario.exception.DocumentoYaRegistradoException;
 import co.com.crediya.model.usuario.exception.UsuarioYaRegistradoException;
 import java.math.BigDecimal;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,12 +35,12 @@ class UsuarioRepositoryAdapterTest {
     }
 
     @Test
-    void savesUserWithGeneratedIdAndCanFindEmailWithoutCaseSensitivity() {
+    void savesUserWithGeneratedIdAndFindsItsNormalizedEmail() {
         Usuario saved = usuarioRepository.guardar(usuario("ana@example.com"));
 
         assertNotNull(saved.getId());
         assertEquals("ana@example.com", saved.getCorreoElectronico());
-        assertTrue(usuarioRepository.existePorCorreoElectronico("ANA@EXAMPLE.COM"));
+        assertTrue(usuarioRepository.existePorCorreoElectronico("ana@example.com"));
     }
 
     @Test
@@ -71,6 +72,10 @@ class UsuarioRepositoryAdapterTest {
         assertEquals("Ana", found.getNombres());
         assertEquals("hash", found.getClave());
         assertTrue(usuarioRepository.buscarPorDocumentoIdentidad("999999").isEmpty());
+        assertEquals(List.of("1020304050"), usuarioRepository
+                .buscarPorDocumentosIdentidad(List.of("1020304050", "999999")).stream()
+                .map(Usuario::getDocumentoIdentidad).toList());
+        assertTrue(usuarioRepository.buscarPorDocumentosIdentidad(List.of()).isEmpty());
         // Llega aquí si dos registros con el mismo documento pasan a la vez la validación previa.
         assertThrows(
                 DocumentoYaRegistradoException.class,
@@ -85,7 +90,7 @@ class UsuarioRepositoryAdapterTest {
                 .rol(Rol.ADMIN)
                 .build());
 
-        Usuario found = usuarioRepository.buscarPorCorreoElectronico("ANA@example.com").orElseThrow();
+        Usuario found = usuarioRepository.buscarPorCorreoElectronico("ana@example.com").orElseThrow();
 
         assertEquals("hash", found.getClave());
         assertEquals(Rol.ADMIN, found.getRol());

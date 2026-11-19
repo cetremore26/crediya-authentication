@@ -9,6 +9,8 @@ import co.com.crediya.model.usuario.Rol;
 import co.com.crediya.model.usuario.Usuario;
 import co.com.crediya.model.usuario.gateways.UsuarioRepository;
 import co.com.crediya.model.usuario.exception.UsuarioInvalidoException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,6 +20,7 @@ import org.junit.jupiter.api.Test;
 class ConsultarUsuariosPorDocumentosUseCaseTest {
     private static final UsuarioAutenticado ASESOR =
             new UsuarioAutenticado(UUID.randomUUID(), "asesor@crediya.com", Rol.ASESOR, null);
+    private final List<Collection<String>> consultas = new ArrayList<>();
     private final UsuarioRepository repository = new UsuarioRepository() {
         @Override
         public boolean existePorCorreoElectronico(String correoElectronico) {
@@ -36,9 +39,16 @@ class ConsultarUsuariosPorDocumentosUseCaseTest {
 
         @Override
         public Optional<Usuario> buscarPorDocumentoIdentidad(String documentoIdentidad) {
-            return "111111".equals(documentoIdentidad) || "222222".equals(documentoIdentidad)
-                    ? Optional.of(Usuario.builder().documentoIdentidad(documentoIdentidad).build())
-                    : Optional.empty();
+            throw new AssertionError("La consulta por lote debe hacer una sola consulta.");
+        }
+
+        @Override
+        public List<Usuario> buscarPorDocumentosIdentidad(Collection<String> documentosIdentidad) {
+            consultas.add(documentosIdentidad);
+            return documentosIdentidad.stream()
+                    .filter(documento -> "111111".equals(documento) || "222222".equals(documento))
+                    .map(documento -> Usuario.builder().documentoIdentidad(documento).build())
+                    .toList();
         }
 
         @Override
@@ -53,6 +63,13 @@ class ConsultarUsuariosPorDocumentosUseCaseTest {
         List<Usuario> usuarios = useCase.execute(List.of("111111", " 222222 ", "111111", "999999"), ASESOR);
 
         assertEquals(2, usuarios.size());
+        assertEquals(List.of(List.of("111111", "222222", "999999")), consultas);
+    }
+
+    @Test
+    void ignoresBlankDocumentsWithoutQuerying() {
+        assertEquals(List.of(), useCase.execute(java.util.Arrays.asList(" ", null), ASESOR));
+        assertEquals(List.of(), consultas);
     }
 
     @Test
