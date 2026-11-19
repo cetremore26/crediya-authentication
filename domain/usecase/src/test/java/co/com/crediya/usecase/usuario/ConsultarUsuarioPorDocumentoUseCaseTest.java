@@ -41,6 +41,12 @@ class ConsultarUsuarioPorDocumentoUseCaseTest {
         }
 
         @Override
+        public java.util.List<Usuario> buscarPorDocumentosIdentidad(
+                java.util.Collection<String> documentosIdentidad) {
+            return java.util.List.of();
+        }
+
+        @Override
         public Usuario guardar(Usuario usuario) {
             return usuario;
         }
