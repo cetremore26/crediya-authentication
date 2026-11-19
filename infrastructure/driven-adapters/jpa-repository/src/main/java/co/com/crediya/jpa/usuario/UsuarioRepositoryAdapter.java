@@ -70,9 +70,9 @@ public class UsuarioRepositoryAdapter
     public Usuario guardar(Usuario usuario) {
         UUID id = usuario.getId() == null ? UUID.randomUUID() : usuario.getId();
 
-        Usuario saved;
+        Usuario guardado;
         try {
-            saved = super.save(usuario.toBuilder().id(id).build());
+            guardado = super.save(usuario.toBuilder().id(id).build());
         } catch (DataIntegrityViolationException exception) {
             if (!esViolacionDeUnicidad(exception)) {
                 throw exception;
@@ -86,7 +86,7 @@ public class UsuarioRepositoryAdapter
         }
 
         LOGGER.info("Usuario guardado con id {}.", id);
-        return saved;
+        return guardado;
     }
 
     @Override
