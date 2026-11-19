@@ -11,3 +11,8 @@ jwt:
   # Sin JWT_PRIVATE_KEY se genera una clave RSA temporal al arrancar (los tokens
   # dejan de valer al reiniciar).
   generate-ephemeral-key: true
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:true}
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}
