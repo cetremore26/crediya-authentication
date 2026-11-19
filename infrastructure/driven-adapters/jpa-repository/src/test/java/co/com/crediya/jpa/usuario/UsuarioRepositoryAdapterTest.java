@@ -1,6 +1,7 @@
 package co.com.crediya.jpa.usuario;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -8,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import co.com.crediya.jpa.JpaTestApplication;
 import co.com.crediya.model.usuario.Rol;
 import co.com.crediya.model.usuario.Usuario;
+import co.com.crediya.model.usuario.exception.DocumentoYaRegistradoException;
 import co.com.crediya.model.usuario.exception.UsuarioYaRegistradoException;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,9 +46,10 @@ class UsuarioRepositoryAdapterTest {
     void rejectsDuplicateEmail() {
         usuarioRepository.guardar(usuario("ana@example.com"));
 
-        assertThrows(
+        UsuarioYaRegistradoException duplicate = assertThrows(
                 UsuarioYaRegistradoException.class,
                 () -> usuarioRepository.guardar(usuario("ana@example.com")));
+        assertFalse(duplicate instanceof DocumentoYaRegistradoException);
     }
 
     @Test
@@ -68,8 +71,9 @@ class UsuarioRepositoryAdapterTest {
         assertEquals("Ana", found.getNombres());
         assertEquals("hash", found.getClave());
         assertTrue(usuarioRepository.buscarPorDocumentoIdentidad("999999").isEmpty());
+        // Llega aquí si dos registros con el mismo documento pasan a la vez la validación previa.
         assertThrows(
-                UsuarioYaRegistradoException.class,
+                DocumentoYaRegistradoException.class,
                 () -> usuarioRepository.guardar(usuario("otra@example.com").toBuilder()
                         .documentoIdentidad("1020304050").build()));
     }
