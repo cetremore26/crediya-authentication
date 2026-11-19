@@ -11,6 +11,11 @@ public record UsuarioAutenticado(
         return rol == Rol.ADMIN || rol == Rol.ASESOR;
     }
 
+    /** Si puede registrar un usuario con ese rol (ver {@link Rol#puedeAsignar(Rol)}). */
+    public boolean puedeAsignarRol(Rol rolNuevo) {
+        return rol != null && rol.puedeAsignar(rolNuevo);
+    }
+
     /** El personal consulta a cualquier usuario; un CLIENTE solo a sí mismo. */
     public boolean puedeConsultarDocumento(String documento) {
         return esPersonal()

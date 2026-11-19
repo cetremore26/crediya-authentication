@@ -47,7 +47,7 @@ public class RegistroUsuarioController {
             @RequestBody UsuarioRequest request,
             @AuthenticationPrincipal UsuarioAutenticado solicitante) {
         LOGGER.info("Solicitud de registro de usuario recibida.");
-        registrarUsuarioUseCase.execute(request.aDominio(), solicitante.rol());
+        registrarUsuarioUseCase.execute(request.aDominio(), solicitante);
         LOGGER.info("Usuario registrado exitosamente.");
         return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioResponse.registrado());
     }

@@ -1,5 +1,6 @@
 package co.com.crediya.usecase.usuario;
 
+import co.com.crediya.model.autenticacion.UsuarioAutenticado;
 import co.com.crediya.model.autenticacion.gateways.CifradorClaves;
 import co.com.crediya.model.usuario.Rol;
 import co.com.crediya.model.usuario.Usuario;
@@ -12,7 +13,8 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * Registra un usuario nuevo. Solo orquesta el flujo: las reglas de qué es un usuario
- * válido viven en {@link Usuario} y las de quién puede asignar cada rol en {@link Rol}.
+ * válido viven en {@link Usuario} y las de quién puede asignar cada rol en {@link Rol}
+ * ({@link UsuarioAutenticado#puedeAsignarRol(Rol)}).
  */
 @RequiredArgsConstructor
 public class RegistrarUsuarioUseCase {
@@ -21,28 +23,51 @@ public class RegistrarUsuarioUseCase {
 
     /**
      * @param usuario datos del usuario a registrar
-     * @param rolSolicitante rol de quien hace el registro
-     * @throws RolNoPermitidoException cuando ese rol no puede asignar el rol del usuario nuevo
+     * @param solicitante quien hace el registro
+     * @throws RolNoPermitidoException cuando el solicitante no puede asignar el rol del usuario nuevo
      */
-    public Usuario execute(Usuario usuario, Rol rolSolicitante) {
+    public Usuario execute(Usuario usuario, UsuarioAutenticado solicitante) {
+        Usuario candidato = normalizar(usuario);
+        if (solicitante == null || !solicitante.puedeAsignarRol(candidato.getRol())) {
+            throw new RolNoPermitidoException(candidato.getRol());
+        }
+        return registrar(candidato);
+    }
+
+    /**
+     * Crea el administrador inicial si todavía no hay un usuario con su correo. Es el único
+     * registro sin solicitante: lo hace el arranque, cuando aún no existe nadie que pueda hacerlo.
+     * Primero comprueba si ya existe, así que un administrador ya creado no se vuelve a validar.
+     *
+     * @return {@code true} si lo creó, {@code false} si ya existía
+     */
+    public boolean registrarAdministradorInicial(Usuario administrador) {
+        Usuario candidato = normalizar(administrador).toBuilder().rol(Rol.ADMIN).build();
+        if (usuarioRepository.existePorCorreoElectronico(candidato.getCorreoElectronico())) {
+            return false;
+        }
+        try {
+            registrar(candidato);
+            return true;
+        } catch (UsuarioYaRegistradoException exception) {
+            // Otra instancia lo creó entre la comprobación y el guardado.
+            return false;
+        }
+    }
+
+    private static Usuario normalizar(Usuario usuario) {
         if (usuario == null) {
             throw new UsuarioInvalidoException("El usuario es obligatorio.");
         }
+        return usuario.normalizado();
+    }
 
-        Usuario candidato = usuario.normalizado();
-        validarPuedeAsignarRol(rolSolicitante, candidato.getRol());
+    private Usuario registrar(Usuario candidato) {
         candidato.validar();
         validarNoRegistrado(candidato);
-
         return usuarioRepository.guardar(candidato.toBuilder()
                 .clave(cifradorClaves.cifrar(candidato.getClave()))
                 .build());
-    }
-
-    private static void validarPuedeAsignarRol(Rol rolSolicitante, Rol rolNuevo) {
-        if (rolSolicitante == null || !rolSolicitante.puedeAsignar(rolNuevo)) {
-            throw new RolNoPermitidoException(rolNuevo);
-        }
     }
 
     private void validarNoRegistrado(Usuario usuario) {

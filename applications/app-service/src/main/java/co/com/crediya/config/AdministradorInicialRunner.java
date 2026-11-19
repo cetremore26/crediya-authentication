@@ -1,8 +1,6 @@
 package co.com.crediya.config;
 
-import co.com.crediya.model.usuario.Rol;
 import co.com.crediya.model.usuario.Usuario;
-import co.com.crediya.model.usuario.exception.UsuarioYaRegistradoException;
 import co.com.crediya.usecase.usuario.RegistrarUsuarioUseCase;
 import java.math.BigDecimal;
 import org.slf4j.Logger;
@@ -14,9 +12,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Crea el primer administrador para que se puedan registrar los demás usuarios.
- * Solo aporta los datos: normalizar, validar y revisar duplicados lo hace
- * {@link RegistrarUsuarioUseCase}, como con cualquier usuario. El arranque actúa con autoridad
- * de administrador, porque todavía no existe nadie más que pueda registrarlo.
+ * Solo aporta los datos: comprobar si ya existe, normalizar, validar y guardar lo hace
+ * {@link RegistrarUsuarioUseCase#registrarAdministradorInicial(Usuario)}.
  */
 @Component
 public class AdministradorInicialRunner implements ApplicationRunner {
@@ -39,18 +36,13 @@ public class AdministradorInicialRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        try {
-            registrarUsuarioUseCase.execute(Usuario.builder()
-                    .nombres(NOMBRES_ADMINISTRADOR)
-                    .apellidos(APELLIDOS_ADMINISTRADOR)
-                    .correoElectronico(adminEmail)
-                    .salarioBase(BigDecimal.ZERO)
-                    .clave(adminPassword)
-                    .rol(Rol.ADMIN)
-                    .build(), Rol.ADMIN);
-            LOGGER.info("Administrador inicial creado.");
-        } catch (UsuarioYaRegistradoException exception) {
-            LOGGER.info("El administrador inicial ya existe.");
-        }
+        boolean creado = registrarUsuarioUseCase.registrarAdministradorInicial(Usuario.builder()
+                .nombres(NOMBRES_ADMINISTRADOR)
+                .apellidos(APELLIDOS_ADMINISTRADOR)
+                .correoElectronico(adminEmail)
+                .salarioBase(BigDecimal.ZERO)
+                .clave(adminPassword)
+                .build());
+        LOGGER.info(creado ? "Administrador inicial creado." : "El administrador inicial ya existe.");
     }
 }

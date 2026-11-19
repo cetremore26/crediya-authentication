@@ -1,7 +1,7 @@
 package co.com.crediya.api.usuario;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -60,7 +60,7 @@ class RegistroUsuarioControllerTest {
     @Test
     void registersUserWithTheRoleOfTheRequester() throws Exception {
         authenticateAs(Rol.ASESOR);
-        when(registrarUsuarioUseCase.execute(any(Usuario.class), eq(Rol.ASESOR)))
+        when(registrarUsuarioUseCase.execute(any(Usuario.class), argThat(s -> s.rol() == Rol.ASESOR)))
                 .thenReturn(Usuario.builder().build());
 
         mockMvc.perform(post("/api/v1/usuarios")
@@ -69,13 +69,13 @@ class RegistroUsuarioControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.mensaje").value("Usuario registrado exitosamente."));
 
-        verify(registrarUsuarioUseCase).execute(any(Usuario.class), eq(Rol.ASESOR));
+        verify(registrarUsuarioUseCase).execute(any(Usuario.class), argThat(s -> s.rol() == Rol.ASESOR));
     }
 
     @Test
     void returnsForbiddenWhenTheRequesterCannotAssignTheRole() throws Exception {
         authenticateAs(Rol.ASESOR);
-        when(registrarUsuarioUseCase.execute(any(Usuario.class), eq(Rol.ASESOR)))
+        when(registrarUsuarioUseCase.execute(any(Usuario.class), argThat(s -> s.rol() == Rol.ASESOR)))
                 .thenThrow(new RolNoPermitidoException(Rol.ADMIN));
 
         mockMvc.perform(post("/api/v1/usuarios")
