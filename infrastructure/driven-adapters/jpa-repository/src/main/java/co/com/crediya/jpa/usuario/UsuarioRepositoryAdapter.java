@@ -2,8 +2,10 @@ package co.com.crediya.jpa.usuario;
 
 import co.com.crediya.jpa.helper.AdapterOperations;
 import co.com.crediya.model.usuario.Usuario;
+import co.com.crediya.model.usuario.exception.DocumentoYaRegistradoException;
 import co.com.crediya.model.usuario.exception.UsuarioYaRegistradoException;
 import co.com.crediya.model.usuario.gateways.UsuarioRepository;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import org.hibernate.exception.ConstraintViolationException;
@@ -20,6 +22,8 @@ public class UsuarioRepositoryAdapter
         extends AdapterOperations<Usuario, UsuarioEntity, UUID, UsuarioDataRepository>
         implements UsuarioRepository {
     private static final Logger LOGGER = LoggerFactory.getLogger(UsuarioRepositoryAdapter.class);
+    /** Columna del índice único {@code uk_usuarios_documento_identidad} (ver migración V1). */
+    private static final String COLUMNA_DOCUMENTO = "documento_identidad";
 
     public UsuarioRepositoryAdapter(UsuarioDataRepository repository, ObjectMapper mapper) {
         super(repository, mapper, UsuarioRepositoryAdapter::aDominio);
@@ -48,7 +52,8 @@ public class UsuarioRepositoryAdapter
     /**
      * Transaccional: la inserción es atómica y se revierte ante cualquier error. Los datos se
      * escriben dentro del método (ver {@link #saveData}) para detectar aquí una violación de
-     * unicidad y traducirla a {@link UsuarioYaRegistradoException}, en vez de fallar al confirmar.
+     * unicidad y traducirla a {@link DocumentoYaRegistradoException} si fue el documento o a
+     * {@link UsuarioYaRegistradoException} si fue el correo, en vez de fallar al confirmar.
      */
     @Override
     @Transactional
@@ -62,7 +67,11 @@ public class UsuarioRepositoryAdapter
             if (!esViolacionDeUnicidad(exception)) {
                 throw exception;
             }
-            LOGGER.warn("Violación de unicidad al guardar usuario.");
+            if (violaUnicidadDelDocumento(exception)) {
+                LOGGER.warn("Documento duplicado al guardar usuario.");
+                throw new DocumentoYaRegistradoException();
+            }
+            LOGGER.warn("Correo duplicado al guardar usuario.");
             throw new UsuarioYaRegistradoException();
         }
 
@@ -79,6 +88,16 @@ public class UsuarioRepositoryAdapter
         return exception instanceof DuplicateKeyException
                 || exception.getCause() instanceof ConstraintViolationException violation
                         && violation.getKind() == ConstraintViolationException.ConstraintKind.UNIQUE;
+    }
+
+    /**
+     * Si la restricción violada es la del documento, según el nombre que extrae Hibernate. No se
+     * mira el mensaje del driver porque puede incluir la sentencia con todas las columnas.
+     */
+    private static boolean violaUnicidadDelDocumento(DataIntegrityViolationException exception) {
+        return exception.getCause() instanceof ConstraintViolationException violation
+                && violation.getConstraintName() != null
+                && violation.getConstraintName().toLowerCase(Locale.ROOT).contains(COLUMNA_DOCUMENTO);
     }
 
     /** Mapeo explícito: el modelo de dominio se construye con el builder de Lombok y no tiene anotaciones JPA. */
