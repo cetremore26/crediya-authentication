@@ -40,7 +40,7 @@ public class IniciarSesionUseCase {
 
         Optional<Usuario> usuario = usuarioRepository
                 .buscarPorCorreoElectronico(Usuario.normalizarCorreo(correoElectronico))
-                .filter(found -> found.getClave() != null);
+                .filter(encontrado -> encontrado.getClave() != null);
         boolean claveCorrecta =
                 cifradorClaves.coincide(clave, usuario.map(Usuario::getClave).orElse(hashDeReferencia));
 
@@ -50,7 +50,7 @@ public class IniciarSesionUseCase {
         return emisorTokens.emitir(usuario.get());
     }
 
-    private static boolean estaVacio(String value) {
-        return value == null || value.isBlank();
+    private static boolean estaVacio(String valor) {
+        return valor == null || valor.isBlank();
     }
 }

@@ -1,51 +1,35 @@
-# Proyecto Base Implementando Clean Architecture
-
-## Antes de Iniciar
-
-Empezaremos por explicar los diferentes componentes del proyectos y partiremos de los componentes externos, continuando con los componentes core de negocio (dominio) y por último el inicio y configuración de la aplicación.
-
-Lee el artículo [Clean Architecture — Aislando los detalles](https://medium.com/bancolombia-tech/clean-architecture-aislando-los-detalles-4f9530f35d7a)
-
-# Arquitectura
-
-![Clean Architecture](https://miro.medium.com/max/1400/1*ZdlHz8B0-qu9Y-QO3AXR_w.png)
-
-## Domain
-
-Es el módulo más interno de la arquitectura, pertenece a la capa del dominio y encapsula la lógica y reglas del negocio mediante modelos y entidades del dominio.
-
-## Usecases
-
-Este módulo gradle perteneciente a la capa del dominio, implementa los casos de uso del sistema, define lógica de aplicación y reacciona a las invocaciones desde el módulo de entry points, orquestando los flujos hacia el módulo de entities.
-
-## Infrastructure
-
-### Helpers
-
-En el apartado de helpers tendremos utilidades generales para los Driven Adapters y Entry Points.
-
-Estas utilidades no están arraigadas a objetos concretos, se realiza el uso de generics para modelar comportamientos
-genéricos de los diferentes objetos de persistencia que puedan existir, este tipo de implementaciones se realizan
-basadas en el patrón de diseño [Unit of Work y Repository](https://medium.com/@krzychukosobudzki/repository-design-pattern-bc490b256006)
-
-Estas clases no puede existir solas y debe heredarse su compartimiento en los **Driven Adapters**
-
-### Driven Adapters
-
-Los driven adapter representan implementaciones externas a nuestro sistema, como lo son conexiones a servicios rest,
-soap, bases de datos, lectura de archivos planos, y en concreto cualquier origen y fuente de datos con la que debamos
-interactuar.
-
-### Entry Points
-
-Los entry points representan los puntos de entrada de la aplicación o el inicio de los flujos de negocio.
-
-## Application
-
-Este módulo es el más externo de la arquitectura, es el encargado de ensamblar los distintos módulos, resolver las dependencias y crear los beans de los casos de use (UseCases) de forma automática, inyectando en éstos instancias concretas de las dependencias declaradas. Además inicia la aplicación (es el único módulo del proyecto donde encontraremos la función “public static void main(String[] args)”.
-
-**Los beans de los casos de uso se disponibilizan automaticamente gracias a un '@ComponentScan' ubicado en esta capa.**
 # crediya-authentication
+
+Microservicio de usuarios y autenticación de CrediYa. Registra usuarios, emite tokens JWT RS256 y
+publica la clave pública con la que otros servicios los verifican.
+
+Sigue la Clean Architecture del scaffold de Bancolombia
+([Clean Architecture — Aislando los detalles](https://medium.com/bancolombia-tech/clean-architecture-aislando-los-detalles-4f9530f35d7a)).
+Las dependencias solo apuntan hacia el dominio, y `DependenciasEntreCapasTest` (ArchUnit) hace
+fallar el build si alguna capa lo incumple.
+
+| Módulo | Capa | Contenido |
+|---|---|---|
+| `domain/model` | Dominio | `Usuario`, `Rol` y `UsuarioAutenticado`, con sus reglas (validación, quién asigna cada rol, quién consulta a quién) y los gateways (`UsuarioRepository`, `CifradorClaves`, `EmisorTokens`, `VerificadorTokens`, `ProveedorClavesPublicas`) |
+| `domain/usecase` | Dominio | `RegistrarUsuarioUseCase`, `IniciarSesionUseCase`, `ConsultarUsuarioPorDocumentoUseCase`, `ConsultarUsuariosPorDocumentosUseCase` y `ObtenerClavesPublicasUseCase` |
+| `infrastructure/driven-adapters/jpa-repository` | Infraestructura | Persistencia en PostgreSQL con JPA; esquema con Flyway (`db/migration`) |
+| `infrastructure/driven-adapters/security` | Infraestructura | BCrypt, firma y verificación RS256 (Nimbus) y JWKS |
+| `infrastructure/entry-points` | Infraestructura | Controladores REST, filtro JWT, seguridad y manejo de errores |
+| `applications/app-service` | Aplicación | Arranque, configuración, registro automático de los `*UseCase` y administrador inicial |
+
+## Endpoints
+
+| Método y ruta | Acceso | Descripción |
+|---|---|---|
+| `POST /api/v1/login` | Público | Inicia sesión con `correo_electronico` y `clave`; devuelve el token |
+| `POST /api/v1/usuarios` | ADMIN, ASESOR | Registra un usuario. Un ADMIN asigna cualquier rol; un ASESOR solo CLIENTE |
+| `GET /api/v1/usuarios/documento/{documento}` | Autenticado | Consulta un usuario. El personal consulta a cualquiera; un CLIENTE solo a sí mismo |
+| `GET /api/v1/usuarios?documentos=a,b` | ADMIN, ASESOR | Consulta por lote (máximo 100 documentos) |
+| `GET /.well-known/jwks.json` | Público | Clave pública (JWKS) para verificar los tokens |
+| `GET /actuator/health` | Público | Estado de salud (lo usan Docker y docker-compose) |
+| `GET /swagger-ui.html` | Público | Documentación, solo con `SWAGGER_ENABLED=true` o en el perfil `local` |
+
+Los errores siempre tienen el formato `{"estado": 409, "codigo": "CORREO_DUPLICADO", "mensaje": "..."}`.
 
 ## Configuración
 
@@ -56,13 +40,14 @@ local activa el perfil `local` (`SPRING_PROFILES_ACTIVE=local`), que trae valore
 |---|---|---|
 | `DB_PASSWORD` | sí | Clave de PostgreSQL (`local`: `crediya_auth_pass`, la del `docker-compose.yml`) |
 | `JWT_PRIVATE_KEY` | sí | Clave RSA privada en PEM PKCS#8 para firmar tokens RS256 (`local`: se genera una temporal) |
-| `ADMIN_PASSWORD` | sí | Clave del administrador inicial (`local`: `Admin12345`) |
+| `ADMIN_PASSWORD` | sí | Clave del administrador inicial (`local`: `Admin12345`). Solo se usa si el administrador todavía no existe |
 | `ADMIN_EMAIL` | no | Correo del administrador inicial (`admin@crediya.com`) |
 | `JWT_EXPIRATION_SECONDS` | no | Vigencia del token (`3600`) |
+| `SWAGGER_ENABLED` | no | Publica Swagger UI y `/v3/api-docs` (`false`; `local`: `true`) |
 | `DB_URL` | no | `jdbc:postgresql://localhost:5432/crediya_auth` |
 | `DB_USERNAME` | no | `crediya` |
 | `DB_DRIVER` / `DB_DIALECT` | no | `org.postgresql.Driver` / `org.hibernate.dialect.PostgreSQLDialect` |
-| `DB_DDL_AUTO` | no | `validate`: el esquema lo crean las migraciones de Flyway (`db/migration`) |
+| `DB_DDL_AUTO` | no | `validate`: el esquema lo crean las migraciones de Flyway |
 
 Generar la clave JWT:
 
@@ -70,6 +55,21 @@ Generar la clave JWT:
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out jwt-private.pem
 ```
 
-La clave pública se publica en `GET /.well-known/jwks.json`; `crediya-solicitudes` la usa para verificar los tokens.
+Levanta las bases y los servicios con `docker compose up -d` desde la carpeta `CREDIYA`.
 
-Levanta la base con `docker compose up -d` desde la carpeta `CREDIYA`.
+## Migraciones
+
+| Versión | Cambio |
+|---|---|
+| V1 | Tabla `usuarios` con correo y documento únicos |
+| V2 | `rol` obligatorio (los usuarios sin rol quedan como CLIENTE) |
+| V3 | Correos en minúsculas, para que las búsquedas usen el índice único |
+
+Las bases creadas antes de Flyway se registran en la versión 1 (`baseline-on-migrate`).
+
+## Pruebas
+
+```bash
+./gradlew test      # unitarias, de adaptadores, de arquitectura e integración de la aplicación completa
+./gradlew pitest    # pruebas de mutación (aparte, porque consumen mucha memoria)
+```

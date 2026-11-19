@@ -103,14 +103,14 @@ public class Usuario {
         }
     }
 
-    private static void validarLongitudMaxima(String value, int maximum, String field) {
-        if (value != null && value.length() > maximum) {
+    private static void validarLongitudMaxima(String valor, int maximo, String campo) {
+        if (valor != null && valor.length() > maximo) {
             throw new UsuarioInvalidoException(
-                    "El campo '" + field + "' no puede superar " + maximum + " caracteres.");
+                    "El campo '" + campo + "' no puede superar " + maximo + " caracteres.");
         }
     }
 
-    private static boolean estaVacio(String value) {
-        return value == null || value.isBlank();
+    private static boolean estaVacio(String valor) {
+        return valor == null || valor.isBlank();
     }
 }
